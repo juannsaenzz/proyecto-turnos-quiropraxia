@@ -1,0 +1,57 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id     Int    @id @default(autoincrement())
+  email  String @unique
+  nombre String
+}
+
+model Paciente {
+  id               Int                @id @default(autoincrement())
+  dni              String?            @unique
+  email            String?            @unique
+  nombre           String
+  telefono         String?
+  fechaNacimiento  String?
+  turnos           Turno[]
+  historialClinico HistorialClinico[]
+}
+
+enum EstadoTurno {
+  PENDIENTE
+  CONFIRMADO
+  ATENDIDO
+  AUSENTE
+}
+
+model Turno {
+  id         Int         @id @default(autoincrement())
+  pacienteId Int
+  fechaHora  DateTime
+  ciudad     String
+  notas      String?
+  estado     EstadoTurno @default(PENDIENTE)
+  paciente   Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+}
+
+model HistorialClinico {
+  id         Int      @id @default(autoincrement())
+  pacienteId Int
+  fecha      DateTime
+  notas      String
+  paciente   Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+}
+
+model ConfiguracionDia {
+  id     String @id @default(uuid())
+  fecha  String @unique
+  ciudad String
+  bloque String
+}

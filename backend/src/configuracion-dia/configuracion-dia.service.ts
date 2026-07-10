@@ -5,6 +5,10 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ConfiguracionDiaService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async findAll() {
+    return this.prisma.configuracionDia.findMany();
+  }
+
   async findByFecha(fecha: string) {
     return this.prisma.configuracionDia.findUnique({
       where: { fecha },

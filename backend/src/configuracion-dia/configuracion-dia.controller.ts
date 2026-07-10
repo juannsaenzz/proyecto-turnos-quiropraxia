@@ -5,6 +5,11 @@ import { ConfiguracionDiaService } from './configuracion-dia.service';
 export class ConfiguracionDiaController {
   constructor(private readonly configuracionDiaService: ConfiguracionDiaService) {}
 
+  @Get()
+  async findAll() {
+    return this.configuracionDiaService.findAll();
+  }
+
   @Get(':fecha')
   async findByFecha(@Param('fecha') fecha: string) {
     const config = await this.configuracionDiaService.findByFecha(fecha);

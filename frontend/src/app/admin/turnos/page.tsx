@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSidebar } from '../components/SidebarContext';
 import { 
   Calendar, 
@@ -128,18 +129,44 @@ const getCalendarCells = (dateStr: string) => {
 export default function AdminDashboard() {
   // Navigation & UI state
   const { setSidebarOpen } = useSidebar();
+  const router = useRouter();
+  const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [showGlobalSearchDropdown, setShowGlobalSearchDropdown] = useState(false);
+  const globalSearchRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to close global search
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (globalSearchRef.current && !globalSearchRef.current.contains(event.target as Node)) {
+        setShowGlobalSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'turnos' | 'pacientes' | 'historial'>('turnos');
   const [calendarViewMode, setCalendarViewMode] = useState<'day' | 'month'>('day');
+  
+  // NEW: State for bulk selection
+  const [selectedTurnos, setSelectedTurnos] = useState<number[]>([]);
   
   // Date and Sucursal Logic
   const [currentDate, setCurrentDate] = useState<string>(getTodayFormatted()); // Default date
   const [selectedCity, setSelectedCity] = useState<string>('Maciá');
   const [selectedShift, setSelectedShift] = useState<'Mañana' | 'Tarde' | 'Ninguno'>('Tarde');
-  const [savedConfig, setSavedConfig] = useState<{ ciudad: string; bloque: 'Mañana' | 'Tarde' | 'Ninguno' } | null>(null);
+  const [savedConfigs, setSavedConfigs] = useState<Record<string, { ciudad: string; bloque: string }>>({});
   const [isEditingConfig, setIsEditingConfig] = useState(false);
   const [tempCity, setTempCity] = useState<string>('Maciá');
   const [tempShift, setTempShift] = useState<'Mañana' | 'Tarde' | 'Ninguno'>('Tarde');
   const [showConfirmConfig, setShowConfirmConfig] = useState(false);
+  const [allConfigs, setAllConfigs] = useState<{fecha: string; ciudad: string; bloque: string}[]>([]);
+
+  // Prevent hydration mismatch by only rendering on client
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Modals state
   const [showNewTurnoModal, setShowNewTurnoModal] = useState(false);
@@ -164,6 +191,14 @@ export default function AdminDashboard() {
   
   // Feedback Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Current time for the timeline indicator
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   // New Clinical History workflow states
   const [selectedHistorialDate, setSelectedHistorialDate] = useState<string | null>(null);
@@ -234,9 +269,7 @@ export default function AdminDashboard() {
   };
 
   const getTargetCityForAppointment = (dateStr: string, hourStr: string) => {
-    if (dateStr === currentDate && savedConfig) {
-      return savedConfig.ciudad;
-    }
+    // For simplicity, we just use defaults for the month view since overrides are per shift
     const defaults = getDefaultsForDate(dateStr, hourStr);
     return defaults.ciudad;
   };
@@ -246,23 +279,51 @@ export default function AdminDashboard() {
     let isMounted = true;
     const fetchOverride = async () => {
       try {
-        const response = await fetch(`http://localhost:3000/configuracion-dia/${currentDate}`);
-        if (!response.ok) {
-          throw new Error('Error al consultar configuración del día');
-        }
-        const data = await response.json();
+        const [resLegacy, resManana, resTarde] = await Promise.all([
+          fetch(`http://localhost:3000/configuracion-dia/${currentDate}`).catch(() => null),
+          fetch(`http://localhost:3000/configuracion-dia/${currentDate}_MANANA`).catch(() => null),
+          fetch(`http://localhost:3000/configuracion-dia/${currentDate}_TARDE`).catch(() => null),
+        ]);
+
+        const parseJson = async (res: Response | null) => {
+          if (!res || !res.ok) return null;
+          try {
+            const text = await res.text();
+            return text ? JSON.parse(text) : null;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const dataLegacy = await parseJson(resLegacy);
+        const dataManana = await parseJson(resManana);
+        const dataTarde = await parseJson(resTarde);
         
         if (isMounted) {
-          if (data && data.ciudad && data.bloque) {
-            const mappedShift = data.bloque === 'MANANA' ? 'Mañana' : 'Tarde';
-            setSelectedCity(data.ciudad);
-            setSelectedShift(mappedShift);
-            setSavedConfig({ ciudad: data.ciudad, bloque: mappedShift });
+          const newConfigs: Record<string, { ciudad: string; bloque: string }> = {};
+          
+          // Legacy config applies to whatever block it specifies, unless overridden
+          if (dataLegacy && dataLegacy.ciudad && dataLegacy.bloque) {
+            const mappedShift = dataLegacy.bloque === 'MANANA' ? 'Mañana' : 'Tarde';
+            newConfigs[mappedShift] = { ciudad: dataLegacy.ciudad, bloque: mappedShift };
+          }
+          if (dataManana && dataManana.ciudad) {
+            newConfigs['Mañana'] = { ciudad: dataManana.ciudad, bloque: 'Mañana' };
+          }
+          if (dataTarde && dataTarde.ciudad) {
+            newConfigs['Tarde'] = { ciudad: dataTarde.ciudad, bloque: 'Tarde' };
+          }
+
+          setSavedConfigs(newConfigs);
+          
+          if (newConfigs[selectedShift]) {
+            setSelectedCity(newConfigs[selectedShift].ciudad);
           } else {
             const defaults = getDefaultsForDate(currentDate);
+            // Default shift doesn't need to change if they are just loading, 
+            // but if they just landed on the date, update it:
             setSelectedCity(defaults.ciudad);
             setSelectedShift(defaults.turno);
-            setSavedConfig(null);
           }
         }
       } catch (error) {
@@ -271,7 +332,7 @@ export default function AdminDashboard() {
           const defaults = getDefaultsForDate(currentDate);
           setSelectedCity(defaults.ciudad);
           setSelectedShift(defaults.turno);
-          setSavedConfig(null);
+          setSavedConfigs({});
         }
       }
     };
@@ -284,8 +345,8 @@ export default function AdminDashboard() {
 
   // Check if current configuration is modified compared to what's stored or default
   const isConfigModified = () => {
-    if (savedConfig) {
-      return selectedCity !== savedConfig.ciudad || selectedShift !== savedConfig.bloque;
+    if (savedConfigs[selectedShift]) {
+      return selectedCity !== savedConfigs[selectedShift].ciudad;
     }
     const defaults = getDefaultsForDate(currentDate);
     return selectedCity !== defaults.ciudad || selectedShift !== defaults.turno;
@@ -299,7 +360,7 @@ export default function AdminDashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          fecha: currentDate,
+          fecha: `${currentDate}_${shift === 'Mañana' ? 'MANANA' : 'TARDE'}`,
           ciudad: city,
           bloque: shift === 'Mañana' ? 'MANANA' : 'TARDE',
         }),
@@ -309,7 +370,15 @@ export default function AdminDashboard() {
         throw new Error('Error al guardar la configuración');
       }
 
-      setSavedConfig({ ciudad: city, bloque: shift });
+      setSavedConfigs(prev => ({
+        ...prev,
+        [shift]: { ciudad: city, bloque: shift }
+      }));
+      setAllConfigs(prev => {
+        const fetchStr = `${currentDate}_${shift === 'Mañana' ? 'MANANA' : 'TARDE'}`;
+        const filtered = prev.filter(c => c.fecha !== fetchStr);
+        return [...filtered, { fecha: fetchStr, ciudad: city, bloque: shift === 'Mañana' ? 'MANANA' : 'TARDE' }];
+      });
       showToast('Agenda de hoy actualizada en la base de datos');
     } catch (error) {
       console.error('Error saving day configuration:', error);
@@ -422,6 +491,15 @@ export default function AdminDashboard() {
           setTurnos(mappedTurnos);
         }
 
+        // 2.5 Fetch All Configs
+        const resConfigs = await fetch('http://localhost:3000/configuracion-dia');
+        if (!resConfigs.ok) throw new Error('Error al cargar configuraciones');
+        const dataConfigs = await resConfigs.json();
+        
+        if (isMounted) {
+          setAllConfigs(dataConfigs);
+        }
+
         // 3. Fetch Historiales
         const resHistorial = await fetch('http://localhost:3000/historial');
         if (!resHistorial.ok) throw new Error('Error al cargar historiales');
@@ -463,6 +541,10 @@ export default function AdminDashboard() {
   // 15-Minute Grid generation based on shift, dynamically expanding for out-of-range appointments
   const get15MinTimeSlots = () => {
     const slots: string[] = [];
+    if (selectedCity === 'Cerrado' || selectedShift === 'Ninguno') {
+      return slots;
+    }
+
     if (selectedShift === 'Mañana') {
       // 07:00 to 15:00 (last slot starts at 14:45)
       for (let hour = 7; hour < 15; hour++) {
@@ -485,7 +567,14 @@ export default function AdminDashboard() {
     }
 
     // Add any scheduled appointments for this day & city that are outside the range
-    const activeAppts = turnos.filter(t => t.fechaHora === currentDate && t.ciudad === selectedCity);
+    const activeAppts = turnos.filter(t => {
+      if (t.fechaHora !== currentDate || t.ciudad !== selectedCity) return false;
+      const hr = parseInt(t.hora.split(':')[0], 10);
+      if (selectedShift === 'Mañana') return hr < 15;
+      if (selectedShift === 'Tarde') return hr >= 15;
+      return false;
+    });
+
     activeAppts.forEach(appt => {
       if (!slots.includes(appt.hora)) {
         slots.push(appt.hora);
@@ -582,16 +671,36 @@ export default function AdminDashboard() {
       t.ciudad === newTurno.ciudad
     );
 
+    const newTurnoHr = parseInt(newTurno.hora.split(':')[0], 10);
+    const newTurnoShift = newTurnoHr < 15 ? 'Mañana' : 'Tarde';
+    
+    const duplicatedPacienteTurnos = turnos.filter(t => {
+      if (t.pacienteId === p.id && t.fechaHora === newTurno.fechaHora) {
+        const tHr = parseInt(t.hora.split(':')[0], 10);
+        const tShift = tHr < 15 ? 'Mañana' : 'Tarde';
+        return tShift === newTurnoShift;
+      }
+      return false;
+    });
+
     const isoDateTime = `${newTurno.fechaHora}T${newTurno.hora}:00.000Z`;
 
-    if (conflictos.length > 0) {
+    if (conflictos.length > 0 || duplicatedPacienteTurnos.length > 0) {
       const parts = newTurno.fechaHora.split('-');
       const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
-      const conflictNames = conflictos.map(c => c.pacienteNombre).join(', ');
+      
+      let messages = [];
+      if (duplicatedPacienteTurnos.length > 0) {
+        messages.push(`El paciente ${p.nombre} ya tiene un turno para el día ${formattedDate} por la ${newTurnoShift.toLowerCase()} a las ${duplicatedPacienteTurnos[0].hora} hs.`);
+      }
+      if (conflictos.length > 0) {
+        const conflictNames = conflictos.map(c => c.pacienteNombre).join(', ');
+        messages.push(`A las ${newTurno.hora} hs ya hay turnos para: ${conflictNames}.`);
+      }
       
       setCustomConfirm({
-        title: 'Conflicto de Horario',
-        message: `El día ${formattedDate} a las ${newTurno.hora} hs ya hay turnos programados para: ${conflictNames}. ¿Estás seguro de agendar este turno para ${p.nombre}?`,
+        title: 'Conflicto de Turno',
+        message: `${messages.join(' ')} ¿Estás seguro de agendar este turno?`,
         confirmText: 'Sí, agendar',
         cancelText: 'Cancelar',
         onConfirm: () => executeCreateTurno(p, isoDateTime, newTurno.hora)
@@ -662,19 +771,39 @@ export default function AdminDashboard() {
       t.ciudad === editingTurno.ciudad
     );
 
+    const editTurnoHr = parseInt(editingTurno.hora.split(':')[0], 10);
+    const editTurnoShift = editTurnoHr < 15 ? 'Mañana' : 'Tarde';
+    
+    const duplicatedPacienteTurnos = turnos.filter(t => {
+      if (t.id !== editingTurno.id && t.pacienteId === p.id && t.fechaHora === editingTurno.fechaHora) {
+        const tHr = parseInt(t.hora.split(':')[0], 10);
+        const tShift = tHr < 15 ? 'Mañana' : 'Tarde';
+        return tShift === editTurnoShift;
+      }
+      return false;
+    });
+
     const updatedWithResolvedName = {
       ...editingTurno,
       pacienteNombre: p.nombre
     };
 
-    if (conflictos.length > 0) {
+    if (conflictos.length > 0 || duplicatedPacienteTurnos.length > 0) {
       const parts = editingTurno.fechaHora.split('-');
       const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
-      const conflictNames = conflictos.map(c => c.pacienteNombre).join(', ');
+      
+      let messages = [];
+      if (duplicatedPacienteTurnos.length > 0) {
+        messages.push(`El paciente ${p.nombre} ya tiene otro turno para el día ${formattedDate} por la ${editTurnoShift.toLowerCase()} a las ${duplicatedPacienteTurnos[0].hora} hs.`);
+      }
+      if (conflictos.length > 0) {
+        const conflictNames = conflictos.map(c => c.pacienteNombre).join(', ');
+        messages.push(`A las ${editingTurno.hora} hs ya hay turnos para: ${conflictNames}.`);
+      }
       
       setCustomConfirm({
-        title: 'Conflicto de Horario',
-        message: `El día ${formattedDate} a las ${editingTurno.hora} hs ya hay turnos programados para: ${conflictNames}. ¿Estás seguro de mover el turno para ${p.nombre} a este horario?`,
+        title: 'Conflicto de Turno',
+        message: `${messages.join(' ')} ¿Estás seguro de mover el turno a este horario?`,
         confirmText: 'Sí, guardar',
         cancelText: 'Cancelar',
         onConfirm: () => executeUpdateTurno(updatedWithResolvedName)
@@ -993,31 +1122,82 @@ export default function AdminDashboard() {
     }
   };
 
+  const toggleTurnoSelection = (id: number) => {
+    setSelectedTurnos(prev => 
+      prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkUpdateEstado = async (nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+    try {
+      await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ estado: nuevoEstado }),
+      })));
+      
+      setTurnos(prevTurnos => 
+        prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado } : t)
+      );
+      setSelectedTurnos([]);
+      showToast(`${selectedTurnos.length} turnos marcados como ${nuevoEstado}`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error al actualizar los turnos en lote');
+    }
+  };
+
+  const handleBulkDeleteTurnos = () => {
+    setCustomConfirm({
+      title: 'Eliminar Turnos Seleccionados',
+      message: `¿Estás seguro de que deseas eliminar los ${selectedTurnos.length} turnos seleccionados? Esta acción no se puede deshacer.`,
+      confirmText: 'Sí, eliminar todos',
+      cancelText: 'Cancelar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+            method: 'DELETE',
+          })));
+          
+          setTurnos(prevTurnos => prevTurnos.filter(t => !selectedTurnos.includes(t.id)));
+          setSelectedTurnos([]);
+          showToast(`${selectedTurnos.length} turnos eliminados con éxito`);
+        } catch (err: any) {
+          console.error(err);
+          alert('Error al eliminar los turnos en lote');
+        }
+      }
+    });
+  };
+
   const getEstadoStyles = (estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     switch (estado) {
       case 'PENDIENTE':
         return {
-          card: 'bg-amber-950/25 border-amber-500/25 text-amber-200 shadow-amber-950/10 hover:border-amber-500/40',
+          card: 'bg-slate-900 border-2 border-amber-500/40 hover:border-amber-500/70',
           badge: 'bg-amber-950/50 border-amber-500/20 text-amber-300'
         };
       case 'CONFIRMADO':
         return {
-          card: 'bg-blue-950/25 border-blue-500/25 text-blue-200 shadow-blue-950/10 hover:border-blue-500/40',
+          card: 'bg-slate-900 border-2 border-blue-500/40 hover:border-blue-500/70',
           badge: 'bg-blue-950/50 border-blue-500/20 text-blue-300'
         };
       case 'ATENDIDO':
         return {
-          card: 'bg-emerald-950/25 border-emerald-500/25 text-emerald-200 shadow-emerald-950/10 hover:border-emerald-500/40',
+          card: 'bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500/70',
           badge: 'bg-emerald-950/50 border-emerald-500/20 text-emerald-300'
         };
       case 'AUSENTE':
         return {
-          card: 'bg-rose-950/25 border-rose-500/25 text-rose-200 shadow-rose-950/10 hover:border-rose-500/40',
+          card: 'bg-slate-900 border-2 border-rose-500/40 hover:border-rose-500/70',
           badge: 'bg-rose-950/50 border-rose-500/20 text-rose-300'
         };
       default:
         return {
-          card: 'bg-slate-900 border-slate-800 text-slate-300',
+          card: 'bg-slate-900 border-2 border-slate-800 hover:border-slate-700',
           badge: 'bg-slate-950 border-slate-800 text-slate-400'
         };
     }
@@ -1052,6 +1232,8 @@ export default function AdminDashboard() {
     { id: 'historial', label: 'Historial Clínico', icon: FileText },
   ] as const;
 
+  if (!isMounted) return null;
+
   return (
     <>
       {/* Toast Alert */}
@@ -1067,7 +1249,7 @@ export default function AdminDashboard() {
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
+            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -1075,31 +1257,52 @@ export default function AdminDashboard() {
             Agenda de Turnos
           </h1>
         </div>
-
-          {activeTab === 'turnos' && (
-            <div className="flex bg-slate-950/60 p-1 border border-slate-850 rounded-2xl">
-              <button
-                onClick={() => setCalendarViewMode('day')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-                  calendarViewMode === 'day'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/10'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Día
-              </button>
-              <button
-                onClick={() => setCalendarViewMode('month')}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-                  calendarViewMode === 'month'
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-900/10'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Mes
-              </button>
+        {/* Global Paciente Search */}
+        <div className="relative w-64 md:w-80 hidden sm:block" ref={globalSearchRef}>
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-slate-500" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-xl leading-5 bg-slate-950/50 text-slate-300 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 sm:text-sm transition-colors"
+            placeholder="Buscar paciente por nombre o DNI..."
+            value={globalSearchQuery}
+            onChange={(e) => {
+              setGlobalSearchQuery(e.target.value);
+              setShowGlobalSearchDropdown(true);
+            }}
+            onFocus={() => setShowGlobalSearchDropdown(true)}
+          />
+          {showGlobalSearchDropdown && globalSearchQuery.length > 0 && (
+            <div className="absolute mt-2 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
+              {(() => {
+                const results = pacientes.filter(p => 
+                  p.nombre.toLowerCase().includes(globalSearchQuery.toLowerCase()) || 
+                  (p.dni && p.dni.includes(globalSearchQuery))
+                );
+                
+                if (results.length === 0) {
+                  return <div className="p-3 text-sm text-slate-400 text-center">No se encontraron pacientes.</div>;
+                }
+                
+                return results.map(p => (
+                  <div
+                    key={p.id}
+                    className="p-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 transition-colors"
+                    onClick={() => {
+                      setShowGlobalSearchDropdown(false);
+                      setGlobalSearchQuery('');
+                      router.push(`/admin/pacientes/${p.id}`);
+                    }}
+                  >
+                    <div className="font-bold text-slate-200">{p.nombre}</div>
+                    {p.dni && <div className="text-xs text-slate-400 mt-0.5">DNI: {p.dni}</div>}
+                  </div>
+                ));
+              })()}
             </div>
           )}
+        </div>
         </header>
 
         {/* Dashboard Main Content */}
@@ -1156,42 +1359,15 @@ export default function AdminDashboard() {
                         </select>
                       </div>
 
-                      <div className="border-l border-slate-800 pl-3">
-                        <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Bloque Horario</label>
-                        <select 
-                          value={tempShift}
-                          onChange={(e) => {
-                            const newShift = e.target.value as 'Mañana' | 'Tarde' | 'Ninguno';
-                            setTempShift(newShift);
-                            
-                            // Auto-switch Friday default cities depending on shift if no override is stored
-                            const dateParts = currentDate.split('-');
-                            const dateObj = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10));
-                            if (dateObj.getDay() === 5 && !savedConfig) {
-                              if (newShift === 'Mañana') {
-                                setTempCity('Gualeguay');
-                              } else if (newShift === 'Tarde') {
-                                setTempCity('Galarza');
-                              }
-                            }
-                          }}
-                          className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 text-slate-200 font-extrabold text-sm focus:outline-none pr-5 cursor-pointer"
-                        >
-                          <option value="Mañana" className="bg-slate-900 text-slate-200">Mañana (07:00 a 15:00)</option>
-                          <option value="Tarde" className="bg-slate-900 text-slate-200">Tarde (15:00 a 20:30)</option>
-                          <option value="Ninguno" className="bg-slate-900 text-slate-200">Ninguno (Cerrado)</option>
-                        </select>
-                      </div>
-
                       {/* Save Exception Button */}
                       <div className="border-l border-slate-800 pl-3 flex items-center gap-2">
                         <button
                           onClick={() => {
                             setShowConfirmConfig(true);
                           }}
-                          disabled={tempCity === selectedCity && tempShift === selectedShift}
+                          disabled={tempCity === selectedCity}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm
-                            ${(tempCity !== selectedCity || tempShift !== selectedShift)
+                            ${(tempCity !== selectedCity)
                               ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-95 cursor-pointer'
                               : 'bg-slate-950 text-slate-500 cursor-not-allowed border border-slate-800/80 shadow-none'
                             }
@@ -1205,7 +1381,6 @@ export default function AdminDashboard() {
                           onClick={() => {
                             setIsEditingConfig(false);
                             setTempCity(selectedCity);
-                            setTempShift(selectedShift);
                           }}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
                         >
@@ -1219,19 +1394,11 @@ export default function AdminDashboard() {
                         <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Sucursal de Hoy</label>
                         <span className="text-slate-200 font-extrabold text-sm block py-1 pr-4">{selectedCity}</span>
                       </div>
-
-                      <div className="border-l border-slate-800 pl-4">
-                        <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Bloque Horario</label>
-                        <span className="text-slate-200 font-extrabold text-sm block py-1 pr-2">
-                          {selectedShift === 'Mañana' ? 'Mañana (07:00 a 15:00)' : selectedShift === 'Tarde' ? 'Tarde (15:00 a 20:30)' : 'Ninguno (Cerrado)'}
-                        </span>
-                      </div>
                       
                       <div className="border-l border-slate-800 pl-4 flex items-center">
                         <button
                           onClick={() => {
                             setTempCity(selectedCity);
-                            setTempShift(selectedShift);
                             setIsEditingConfig(true);
                           }}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
@@ -1337,32 +1504,121 @@ export default function AdminDashboard() {
 
           {/* TAB 1: CALENDARIO EN INTERVALOS DE 15 MINUTOS */}
           {activeTab === 'turnos' && (
-            calendarViewMode === 'day' ? (
-              <div className="space-y-6">
+            <>
+              {calendarViewMode === 'day' ? (
+                <div className="space-y-6">
                 {/* Date label header info */}
-                <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <span className="text-xs text-emerald-400 font-bold block uppercase tracking-widest">Atención Activa</span>
-                    <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
-                      {getFormattedDateLabel(currentDate)}
-                    </h2>
-                  </div>
-                  <div className="bg-slate-950 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider border border-slate-800 text-slate-300">
-                    {selectedCity} — {selectedShift === 'Ninguno' ? 'Cerrado' : `Turno ${selectedShift}`}
-                  </div>
-                </div>
+                {(() => {
+                  const dateParts = currentDate.split('-');
+                  const dayOfWeek = new Date(
+                    parseInt(dateParts[0], 10),
+                    parseInt(dateParts[1], 10) - 1,
+                    parseInt(dateParts[2], 10)
+                  ).getDay();
+                  
+                  const morningTurnos = turnos.some(t => t.fechaHora === currentDate && parseInt(t.hora.split(':')[0], 10) < 15);
+                  const isMorningAvailable = [0, 5, 6].includes(dayOfWeek) || !!savedConfigs['Mañana'] || morningTurnos;
+
+                  const getCityForShift = (newShift: 'Mañana' | 'Tarde') => {
+                    if (savedConfigs[newShift]) return savedConfigs[newShift].ciudad;
+                    switch (dayOfWeek) {
+                      case 1: case 3: case 4:
+                        return newShift === 'Tarde' ? 'Rosario del Tala' : 'Cerrado';
+                      case 2:
+                        return newShift === 'Tarde' ? 'Maciá' : 'Cerrado';
+                      case 5:
+                        return newShift === 'Mañana' ? 'Gualeguay' : 'Galarza';
+                      default:
+                        return 'Cerrado';
+                    }
+                  };
+
+                  return (
+                    <div className="flex flex-col gap-4">
+                      {/* Date and Place Box */}
+                      <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                        <div>
+                          <span className="text-xs text-emerald-400 font-bold block uppercase tracking-widest">Atención Activa</span>
+                          <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
+                            {getFormattedDateLabel(currentDate)}
+                          </h2>
+                        </div>
+                        <div className="bg-slate-950 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider border border-slate-800 text-slate-300">
+                          {selectedCity}
+                        </div>
+                      </div>
+
+                      {/* View & Shift Toggles */}
+                      <div className="flex items-center gap-4">
+                        {/* View Toggle */}
+                        <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 shadow-sm">
+                          <button
+                            onClick={() => setCalendarViewMode('day')}
+                            className="px-6 py-2 text-xs font-bold rounded-xl transition bg-emerald-600 text-white shadow-md shadow-emerald-900/10"
+                          >
+                            Día
+                          </button>
+                          <button
+                            onClick={() => setCalendarViewMode('month')}
+                            className="px-6 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200"
+                          >
+                            Mes
+                          </button>
+                        </div>
+
+                        {/* Shift Toggle */}
+                        <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 shadow-sm">
+                          <button 
+                            onClick={() => {
+                              setSelectedShift('Mañana');
+                              setSelectedCity(getCityForShift('Mañana'));
+                            }}
+                            className={`px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
+                               selectedShift === 'Mañana' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            Mañana
+                          </button>
+                          <button 
+                             onClick={() => {
+                               setSelectedShift('Tarde');
+                               setSelectedCity(getCityForShift('Tarde'));
+                             }}
+                             className={`px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
+                               selectedShift === 'Tarde' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                            }`}
+                          >
+                            Tarde
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
 
                 {timeSlots.length === 0 ? (
-                  <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center space-y-4">
+                  <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center space-y-5">
                     <div className="h-14 w-14 bg-rose-950/40 text-rose-400 rounded-2xl border border-rose-900/30 flex items-center justify-center">
                       <AlertCircle className="h-7 w-7" />
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-slate-100">Sucursal Cerrada / Sin Turnos</h3>
-                      <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                        Esta sucursal no atiende en el bloque seleccionado. Podés cambiar manualmente la sucursal y el bloque horario arriba, o agendar un nuevo turno para habilitar la agenda.
+                      <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+                        No hay atención configurada para este bloque horario.
                       </p>
                     </div>
+                    <button 
+                      onClick={() => {
+                        setTempCity(selectedCity);
+                        setIsEditingConfig(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 mt-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Habilitar Sucursal
+                    </button>
                   </div>
                 ) : (
                   /* Google Calendar style schedule grid every 15 minutes */
@@ -1371,10 +1627,40 @@ export default function AdminDashboard() {
                       {timeSlots.map((time) => {
                         const matchedAppts = calendarTurnos.filter(t => t.hora === time);
                         
+                        // Timeline logic
+                        const isToday = currentDate === getTodayFormatted();
+                        let showTimeline = false;
+                        let timelinePercentage = 0;
+                        if (isToday && currentTime) {
+                          const options = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false } as const;
+                          const formatter = new Intl.DateTimeFormat('en-US', options);
+                          const timeString = formatter.format(currentTime);
+                          const [currHr, currMin] = timeString.split(':').map(Number);
+                          const currentTotalMins = currHr * 60 + currMin;
+                          const [slotHr, slotMin] = time.split(':').map(Number);
+                          const slotTotalMins = slotHr * 60 + slotMin;
+                          
+                          if (currentTotalMins >= slotTotalMins && currentTotalMins < slotTotalMins + 15) {
+                            showTimeline = true;
+                            timelinePercentage = ((currentTotalMins - slotTotalMins) / 15) * 100;
+                          }
+                        }
+                        
                         return (
-                          <div key={time} className="flex min-h-[70px] group transition hover:bg-slate-950/40">
+                          <div key={time} className="relative flex min-h-[70px] group transition hover:bg-slate-950/40">
+                            {/* Current Time Line */}
+                            {showTimeline && (
+                              <div 
+                                className="absolute left-0 right-0 z-40 pointer-events-none" 
+                                style={{ top: `${timelinePercentage}%` }}
+                              >
+                                <div className="absolute left-[6rem] sm:left-[7rem] right-0 h-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)] -translate-y-1/2"></div>
+                                <div className="absolute left-[6rem] sm:left-[7rem] w-3 h-3 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)] -translate-x-1.5 -translate-y-1/2"></div>
+                              </div>
+                            )}
+
                             {/* Time Column */}
-                            <div className="w-24 sm:w-28 px-4 py-4.5 border-r border-slate-800 flex-shrink-0 flex items-start justify-end font-bold text-slate-400 text-sm">
+                            <div className="w-24 sm:w-28 px-4 py-4.5 border-r border-slate-800 flex-shrink-0 flex items-center justify-end font-bold text-slate-400 text-sm">
                               {time}
                             </div>
 
@@ -1386,55 +1672,53 @@ export default function AdminDashboard() {
                                   return (
                                     <div 
                                       key={appt.id}
-                                      className={`flex-grow max-w-lg p-3.5 rounded-2xl border transition duration-150 flex flex-col justify-between shadow-sm relative group/card ${styles.card}`}
+                                      className={`flex-grow p-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
                                     >
-                                      <div>
-                                        <div className="flex items-start justify-between">
-                                          <span className="font-extrabold text-sm tracking-tight">{appt.pacienteNombre}</span>
-                                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${styles.badge}`}>
-                                            {appt.estado}
-                                          </span>
+                                      {/* Left: Checkbox & Name */}
+                                      <div className="flex items-center gap-4 md:w-1/3">
+                                        <div className="flex items-center justify-center">
+                                          <input 
+                                            type="checkbox" 
+                                            checked={selectedTurnos.includes(appt.id)} 
+                                            onChange={() => toggleTurnoSelection(appt.id)}
+                                            className="w-5 h-5 accent-emerald-500 rounded border-slate-700 cursor-pointer"
+                                          />
                                         </div>
-                                        <p className="text-xs font-semibold mt-1 opacity-90">{appt.notas}</p>
+                                        <span className="font-extrabold text-base tracking-tight text-slate-100">{appt.pacienteNombre}</span>
                                       </div>
-
-                                      {/* Dropdown State Selector */}
-                                      <div className="flex items-center gap-2 mt-3 pt-2.5 border-t border-current/10">
-                                        <span className="text-[10px] font-bold opacity-60">Estado:</span>
-                                        <select
-                                          value={appt.estado}
-                                          onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
-                                          className="text-[11px] font-extrabold bg-white/50 hover:bg-white border border-current/10 rounded-xl px-2.5 py-1 text-slate-800 focus:outline-none transition cursor-pointer"
-                                        >
-                                          <option value="PENDIENTE">PENDIENTE</option>
-                                          <option value="CONFIRMADO">CONFIRMADO</option>
-                                          <option value="ATENDIDO">ATENDIDO</option>
-                                          <option value="AUSENTE">AUSENTE</option>
-                                        </select>
-                                      </div>
-
-                                      <div className="flex justify-between items-center text-[10px] font-bold opacity-80 mt-2.5 pt-1.5 border-t border-current/10">
-                                        <div className="flex items-center space-x-2.5">
-                                          <span className="flex items-center"><Clock className="h-3 w-3 mr-1" /> {appt.hora} hs</span>
-                                          <span className="flex items-center"><MapPin className="h-3 w-3 mr-0.5" /> {appt.ciudad}</span>
+                                      
+                                      {/* Right: State Selector and Actions */}
+                                      <div className="flex items-center gap-4 justify-end">
+                                        <div className="relative inline-flex items-center">
+                                          <select
+                                            value={appt.estado}
+                                            onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-8 ${styles.badge}`}
+                                          >
+                                            <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
+                                            <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>
+                                            <option value="ATENDIDO" className="text-slate-800 bg-white">ATENDIDO</option>
+                                            <option value="AUSENTE" className="text-slate-800 bg-white">AUSENTE</option>
+                                          </select>
+                                          <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
                                         </div>
-                                        <div className="flex items-center space-x-1.5">
+                                        <div className="flex items-center gap-2">
                                           <button 
                                             onClick={() => {
                                               setEditingTurno(appt);
                                               setShowEditTurnoModal(true);
                                             }}
-                                            className="p-1.5 bg-white/40 hover:bg-white/90 text-slate-800 rounded-lg border border-current/15 transition shadow-sm"
+                                            className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition"
                                             title="Editar turno"
                                           >
-                                            <Pencil className="h-2.5 w-2.5" />
+                                            <Pencil className="h-4 w-4" />
                                           </button>
                                           <button 
                                             onClick={() => handleDeleteTurno(appt.id)}
-                                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition shadow-sm"
+                                            className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition"
                                             title="Eliminar turno"
                                           >
-                                            <Trash2 className="h-2.5 w-2.5" />
+                                            <Trash2 className="h-4 w-4" />
                                           </button>
                                         </div>
                                       </div>
@@ -1481,6 +1765,24 @@ export default function AdminDashboard() {
                   </h2>
                 </div>
 
+                <div className="flex items-center gap-4">
+                  {/* View Toggle */}
+                  <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 shadow-sm">
+                    <button
+                      onClick={() => setCalendarViewMode('day')}
+                      className="px-6 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200"
+                    >
+                      Día
+                    </button>
+                    <button
+                      onClick={() => setCalendarViewMode('month')}
+                      className="px-6 py-2 text-xs font-bold rounded-xl transition bg-emerald-600 text-white shadow-md shadow-emerald-900/10"
+                    >
+                      Mes
+                    </button>
+                  </div>
+                </div>
+
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-sm">
                   {/* Days of week header */}
                   <div className="grid grid-cols-7 text-center text-xs font-bold text-slate-400 uppercase tracking-wider py-4 bg-slate-950/60 border-b border-slate-800">
@@ -1499,7 +1801,17 @@ export default function AdminDashboard() {
                       const cells = getCalendarCells(currentDate);
                       return cells.map((cell, idx) => {
                         const dateTurnos = turnos.filter(t => t.fechaHora.split('T')[0] === cell.dateString);
-                        const sucursalVal = dateTurnos.length > 0 ? dateTurnos[0].ciudad : getDefaultsForDate(cell.dateString).ciudad;
+                        
+                        const configManana = allConfigs.find(c => c.fecha === `${cell.dateString}_MANANA`)?.ciudad || getDefaultsForDate(cell.dateString, '09:00').ciudad;
+                        const configTarde = allConfigs.find(c => c.fecha === `${cell.dateString}_TARDE`)?.ciudad || getDefaultsForDate(cell.dateString, '16:00').ciudad;
+                        
+                        const validCities = [configManana, configTarde].filter(c => c !== 'Cerrado');
+                        const uniqueValid = Array.from(new Set(validCities));
+                        
+                        let sucursalVal = 'Cerrado';
+                        if (uniqueValid.length === 1) sucursalVal = uniqueValid[0];
+                        else if (uniqueValid.length > 1) sucursalVal = uniqueValid.join(' y ');
+
                         const isSelected = cell.dateString === currentDate;
 
                         return (
@@ -1524,12 +1836,9 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="space-y-1 mt-2">
-                              <div className={`text-[10px] font-bold truncate flex items-center gap-1 ${
-                                cell.isCurrentMonth 
-                                  ? sucursalVal === 'Rosario del Tala' ? 'text-blue-400' : sucursalVal === 'Maciá' ? 'text-purple-400' : sucursalVal === 'Gualeguay' ? 'text-amber-400' : 'text-slate-400'
-                                  : 'text-slate-700'
+                              <div className={`text-[10px] font-bold truncate ${
+                                cell.isCurrentMonth ? 'text-slate-200' : 'text-slate-700'
                               }`}>
-                                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
                                 <span className="truncate">{sucursalVal}</span>
                               </div>
 
@@ -1547,9 +1856,41 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-            )
+            )}
+            </>
           )}
         </main>
+
+      {/* Floating Action Bar for Bulk Select */}
+      {selectedTurnos.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
+          <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
+            <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
+          </div>
+          <div className="hidden sm:block h-8 w-px bg-slate-700"></div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button onClick={handleBulkDeleteTurnos} className="px-3 py-1.5 bg-rose-950/40 text-rose-400 border border-rose-500/30 rounded-xl hover:bg-rose-900/60 transition flex items-center justify-center" title="Eliminar Seleccionados">
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <div className="hidden sm:block h-6 w-px bg-slate-700/80 self-center mx-1"></div>
+            <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-slate-600/20 text-slate-400 border border-slate-500/30 rounded-xl text-xs font-bold hover:bg-slate-600/30 transition">
+              Pendientes
+            </button>
+            <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition">
+              Atendidos
+            </button>
+            <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-600/30 transition">
+              Confirmados
+            </button>
+            <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-600/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold hover:bg-rose-600/30 transition">
+              Ausentes
+            </button>
+          </div>
+          <button onClick={() => setSelectedTurnos([])} className="absolute -top-3 -right-3 p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-full border border-slate-700 hover:bg-slate-700 transition shadow-lg">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* MODAL: CONFIRMAR CONFIGURACION */}
       {showConfirmConfig && (
@@ -1562,7 +1903,7 @@ export default function AdminDashboard() {
               <h3 className="text-xl font-extrabold text-slate-100">Confirmar Cambio</h3>
             </div>
             <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-              ¿Estás seguro de modificar la sucursal del día {currentDate.split('-').reverse().join('/')} a <strong className="text-emerald-400">{tempCity}</strong> en el turno <strong className="text-emerald-400">{tempShift}</strong>?
+              ¿Estás seguro de modificar la sucursal del día {currentDate.split('-').reverse().join('/')} a <strong className="text-emerald-400">{tempCity}</strong> en el turno <strong className="text-emerald-400">{selectedShift}</strong>?
             </p>
             <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-800/60">
               <button
@@ -1574,8 +1915,7 @@ export default function AdminDashboard() {
               <button
                 onClick={async () => {
                   setSelectedCity(tempCity);
-                  setSelectedShift(tempShift);
-                  await handleSaveConfig(tempCity, tempShift);
+                  await handleSaveConfig(tempCity, selectedShift);
                   setShowConfirmConfig(false);
                   setIsEditingConfig(false);
                 }}

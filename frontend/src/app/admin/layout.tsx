@@ -3,34 +3,42 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Users, FileText, Menu, X, Check } from 'lucide-react';
+import { Calendar, Users, FileText, Menu, X, Check, LogOut } from 'lucide-react';
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   const menuItems = [
     { id: 'turnos', label: 'Calendario de Turnos', icon: Calendar, path: '/admin/turnos' },
     { id: 'pacientes', label: 'Pacientes', icon: Users, path: '/admin/pacientes' },
-    { id: 'historial', label: 'Historial Clínico', icon: FileText, path: '/admin/historial' },
   ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
-      {/* Mobile Sidebar Overlay */}
+      {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar Component */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between
-        transition-transform duration-300 transform lg:translate-x-0 lg:static lg:w-72
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800/80 flex flex-col justify-between
+        transition-transform duration-300 transform
+        ${sidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
       `}>
         <div>
           {/* Logo Header */}
@@ -58,7 +66,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             </div>
             <button 
               onClick={() => setSidebarOpen(false)} 
-              className="lg:hidden text-slate-400 p-2 hover:bg-slate-800 rounded-xl"
+              className="text-slate-400 p-2 hover:bg-slate-800 rounded-xl transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
@@ -89,11 +97,25 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             })}
           </nav>
         </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-slate-800">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center space-x-3.5 px-4.5 py-3.5 rounded-2xl text-sm font-bold transition duration-150 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30"
+          >
+            <LogOut className="h-5 w-5" />
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {children}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        {/* Page Content */}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

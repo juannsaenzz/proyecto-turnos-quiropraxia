@@ -69,7 +69,7 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Whitelist emails (in the future, could read from an environment variable or DB)
-    const allowedEmails = ['juannsaenzz17@gmail.com']
+    const allowedEmails = ['juannsaenzz17@gmail.com', 'juannnnnsaenzzzz1@gmail.com']
     const isAllowed = user.email && allowedEmails.includes(user.email)
 
     if (!isAllowed) {
@@ -83,7 +83,7 @@ export async function updateSession(request: NextRequest) {
   // If user is already logged in, they shouldn't see the login page
   if (request.nextUrl.pathname === '/login' && user) {
     // If they are allowed, go to admin
-    const allowedEmails = ['juannsaenzz17@gmail.com']
+    const allowedEmails = ['juannsaenzz17@gmail.com', 'juannnnnsaenzzzz1@gmail.com']
     if (user.email && allowedEmails.includes(user.email)) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin/turnos'

@@ -1,6 +1,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -40,6 +41,8 @@ model Turno {
   notas      String?
   estado     EstadoTurno @default(PENDIENTE)
   paciente   Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  updatedAt  DateTime    @default(now()) @updatedAt
+  updatedBy  String?
 }
 
 model HistorialClinico {

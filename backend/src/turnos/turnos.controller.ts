@@ -26,6 +26,7 @@ export class TurnosController {
     @Param('id', ParseIntPipe) id: number,
     @Body() data: Partial<Omit<Turno, 'id'>>,
   ): Promise<Turno> {
+    console.log(`UPDATE TURNO ${id} PAYLOAD:`, data);
     return this.turnosService.update(id, data);
   }
 

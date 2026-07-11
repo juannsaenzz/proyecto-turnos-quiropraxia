@@ -169,6 +169,9 @@ export default function AdminDashboard() {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Sort state
+  const [sortOption, setSortOption] = useState<'A-Z' | 'Z-A' | 'turnos-asc' | 'turnos-desc'>('A-Z');
+  
   // Feedback Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -1042,6 +1045,17 @@ export default function AdminDashboard() {
     (p.dni && p.dni.includes(searchQuery))
   );
 
+  const sortedPacientes = [...filteredPacientes].sort((a, b) => {
+    if (sortOption === 'A-Z') return a.nombre.localeCompare(b.nombre);
+    if (sortOption === 'Z-A') return b.nombre.localeCompare(a.nombre);
+    if (sortOption === 'turnos-asc' || sortOption === 'turnos-desc') {
+      const turnosA = turnos.filter(t => t.pacienteId === a.id).length;
+      const turnosB = turnos.filter(t => t.pacienteId === b.id).length;
+      return sortOption === 'turnos-asc' ? turnosA - turnosB : turnosB - turnosA;
+    }
+    return 0;
+  });
+
   const filteredPatientsForAutocomplete = pacientes.filter(p => {
     const q = pacienteSearchQuery.toLowerCase().trim();
     if (!q) return true;
@@ -1071,36 +1085,49 @@ export default function AdminDashboard() {
 
       {/* Top Header */}
       <header className="h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex items-center justify-between -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6">
-        <div className="flex items-center space-x-4">
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
-            Pacientes
-          </h1>
-        </div>
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
+              Pacientes
+            </h1>
+          </div>
 
-        {/* Global Paciente Search & Actions */}
-        <div className="hidden sm:flex items-center gap-4" ref={globalSearchRef}>
-          <div className="relative w-64 md:w-80">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-500" />
+          {/* Global Paciente Search */}
+          <div className="absolute left-1/2 -translate-x-1/2 hidden sm:block w-64 md:w-96" ref={globalSearchRef}>
+            <div className="relative w-full">
+              <input
+                type="text"
+                className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500 transition"
+                placeholder="Buscar paciente por nombre o DNI..."
+                value={globalSearchQuery}
+                onChange={(e) => {
+                  setGlobalSearchQuery(e.target.value);
+                  setSearchQuery(e.target.value); // Keep table filtered as well
+                  setShowGlobalSearchDropdown(true);
+                }}
+                onFocus={() => setShowGlobalSearchDropdown(true)}
+              />
+              {globalSearchQuery.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGlobalSearchQuery('');
+                    setSearchQuery('');
+                    setShowGlobalSearchDropdown(false);
+                  }}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800 transition"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : (
+                <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+              )}
             </div>
-            <input
-              type="text"
-              className="block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-xl leading-5 bg-slate-950/50 text-slate-300 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 sm:text-sm transition-colors"
-              placeholder="Buscar paciente por nombre o DNI..."
-              value={globalSearchQuery}
-              onChange={(e) => {
-                setGlobalSearchQuery(e.target.value);
-                setSearchQuery(e.target.value); // Keep table filtered as well
-                setShowGlobalSearchDropdown(true);
-              }}
-              onFocus={() => setShowGlobalSearchDropdown(true)}
-            />
             {showGlobalSearchDropdown && globalSearchQuery.length > 0 && (
               <div className="absolute mt-2 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
                 {(() => {
@@ -1125,35 +1152,48 @@ export default function AdminDashboard() {
                       }}
                     >
                       <div className="font-bold text-slate-200">{p.nombre}</div>
-                      {p.dni && <div className="text-xs text-slate-400 mt-0.5">DNI: {p.dni}</div>}
+                      {/* DNI removed */}
                     </div>
                   ));
                 })()}
               </div>
             )}
           </div>
-          <button 
-            onClick={() => setShowNewPacienteModal(true)}
-            className="px-4 py-2 font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center justify-center gap-2 shadow-sm transition"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span className="hidden md:inline">Registrar Paciente</span>
-            <span className="md:hidden">Nuevo</span>
-          </button>
-        </div>
       </header>
       
       <main className="flex-grow p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
         <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-850 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <span className="font-extrabold text-slate-100 text-sm sm:text-base">Pacientes Registrados</span>
+            
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="relative inline-flex items-center w-full sm:w-auto">
+                <select
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value as any)}
+                  className="w-full sm:w-auto appearance-none bg-slate-950 border border-slate-800 text-slate-300 text-sm font-semibold rounded-xl px-4 py-2 pr-10 focus:outline-none focus:border-emerald-500 transition cursor-pointer hover:bg-slate-900"
+                >
+                  <option value="A-Z">Orden alfabético (A-Z)</option>
+                  <option value="Z-A">Orden alfabético (Z-A)</option>
+                  <option value="turnos-desc">Mayor cantidad de turnos</option>
+                  <option value="turnos-asc">Menor cantidad de turnos</option>
+                </select>
+                <ChevronDown className="absolute right-3 h-4 w-4 text-slate-500 pointer-events-none" />
+              </div>
+              <button 
+                onClick={() => setShowNewPacienteModal(true)}
+                className="w-full sm:w-auto px-5 py-2 font-bold text-sm text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl flex items-center justify-center gap-2 border border-slate-700 transition"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Registrar Paciente</span>
+              </button>
+            </div>
           </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-slate-950/60 border-b border-slate-800 text-[10px] font-black uppercase text-slate-550 tracking-wider">
-                      <th className="px-6 py-4">ID</th>
                       <th className="px-6 py-4">Paciente</th>
                       <th className="px-6 py-4">DNI</th>
                       <th className="px-6 py-4">Email</th>
@@ -1162,13 +1202,12 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-850 text-sm font-semibold text-slate-300">
-                    {filteredPacientes.map(p => (
+                    {sortedPacientes.map(p => (
                       <tr key={p.id} className="hover:bg-slate-850/40 transition">
-                        <td className="px-6 py-4 text-slate-500">#{p.id}</td>
-                        <td className="px-6 py-4 font-extrabold text-slate-100">{p.nombre}</td>
+                        <td className="px-6 py-4 font-extrabold text-white text-base capitalize tracking-tight max-w-[100px] sm:max-w-[150px] md:max-w-[200px] lg:max-w-[250px] truncate" title={p.nombre}>{p.nombre}</td>
                         <td className="px-6 py-4 text-slate-400">{p.dni || '-'}</td>
-                        <td className="px-6 py-4 text-slate-400 font-medium">{p.email || '-'}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-400">{p.telefono || '-'}</td>
+                        <td className="px-6 py-4 text-slate-400 font-medium max-w-[100px] sm:max-w-[150px] md:max-w-[200px] truncate" title={p.email || ''}>{p.email || '-'}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-400 whitespace-nowrap">{p.telefono || '-'}</td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button 
@@ -1238,15 +1277,16 @@ export default function AdminDashboard() {
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {
-                        setPacienteSearchQuery(e.target.value);
-                        setShowPacienteDropdown(true);
+                        const val = e.target.value;
+                        setPacienteSearchQuery(val);
+                        setShowPacienteDropdown(val.trim() !== '');
                         setActivePacienteIndex(-1);
                         
                         if (newTurno.pacienteId) {
                           setNewTurno({ ...newTurno, pacienteId: '' });
                         }
                       }}
-                      onFocus={() => setShowPacienteDropdown(true)}
+                      onFocus={() => setShowPacienteDropdown(pacienteSearchQuery.trim() !== '')}
                       onKeyDown={(e) => {
                         if (!showPacienteDropdown) return;
                         
@@ -1364,6 +1404,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
                     type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                     value={newTurno.fechaHora}
                     onChange={(e) => {
                       const newDate = e.target.value;
@@ -1374,7 +1415,7 @@ export default function AdminDashboard() {
                         ciudad: targetCity 
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     required
                   />
                 </div>
@@ -1391,7 +1432,7 @@ export default function AdminDashboard() {
                         ciudad: targetCity
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                     required
                   >
                     {getModalTimeSlots().map(time => (
@@ -1406,7 +1447,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
                   <select 
                     value={newTurno.ciudad}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
                     disabled
                   >
                     {ciudadesDisponibles.map(c => (
@@ -1419,7 +1460,7 @@ export default function AdminDashboard() {
                   <select 
                     value={newTurno.estado}
                     onChange={(e) => setNewTurno({ ...newTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   >
                     <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
                     <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
@@ -1482,15 +1523,16 @@ export default function AdminDashboard() {
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {
-                        setPacienteSearchQuery(e.target.value);
-                        setShowPacienteDropdown(true);
+                        const val = e.target.value;
+                        setPacienteSearchQuery(val);
+                        setShowPacienteDropdown(val.trim() !== '');
                         setActivePacienteIndex(-1);
                         
                         if (editingTurno.pacienteId) {
                           setEditingTurno({ ...editingTurno, pacienteId: 0 });
                         }
                       }}
-                      onFocus={() => setShowPacienteDropdown(true)}
+                      onFocus={() => setShowPacienteDropdown(pacienteSearchQuery.trim() !== '')}
                       onKeyDown={(e) => {
                         if (!showPacienteDropdown) return;
                         
@@ -1608,6 +1650,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
                     type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                     value={editingTurno.fechaHora}
                     onChange={(e) => {
                       const newDate = e.target.value;
@@ -1618,7 +1661,7 @@ export default function AdminDashboard() {
                         ciudad: targetCity 
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     required
                   />
                 </div>
@@ -1635,7 +1678,7 @@ export default function AdminDashboard() {
                         ciudad: targetCity
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                     required
                   >
                     {getModalTimeSlots().map(time => (
@@ -1650,7 +1693,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
                   <select 
                     value={editingTurno.ciudad}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
                     disabled
                   >
                     {ciudadesDisponibles.map(c => (
@@ -1663,7 +1706,7 @@ export default function AdminDashboard() {
                   <select 
                     value={editingTurno.estado}
                     onChange={(e) => setEditingTurno({ ...editingTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   >
                     <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
                     <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
@@ -1731,7 +1774,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={newPaciente.nombre}
                   onChange={(e) => setNewPaciente({ ...newPaciente, nombre: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                   required
@@ -1759,7 +1802,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={newPaciente.dni}
                         onChange={(e) => setNewPaciente({ ...newPaciente, dni: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: 12345678"
                       />
                     </div>
@@ -1769,7 +1812,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={newPaciente.telefono}
                         onChange={(e) => setNewPaciente({ ...newPaciente, telefono: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: 5493442XXXXXX"
                       />
                     </div>
@@ -1782,7 +1825,7 @@ export default function AdminDashboard() {
                         type="email"
                         value={newPaciente.email}
                         onChange={(e) => setNewPaciente({ ...newPaciente, email: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: juan@gmail.com"
                       />
                     </div>
@@ -1790,9 +1833,10 @@ export default function AdminDashboard() {
                       <label className="text-xs text-slate-400 font-bold block uppercase">Fecha de Nacimiento</label>
                       <input 
                         type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                         value={newPaciente.fechaNacimiento}
                         onChange={(e) => setNewPaciente({ ...newPaciente, fechaNacimiento: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       />
                     </div>
                   </div>
@@ -1845,7 +1889,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={editingPaciente.nombre}
                   onChange={(e) => setEditingPaciente({ ...editingPaciente, nombre: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                   required
@@ -1860,7 +1904,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={editingPaciente.dni || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, dni: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: 12345678"
                     />
                   </div>
@@ -1870,7 +1914,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={editingPaciente.telefono || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, telefono: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: 5493442XXXXXX"
                     />
                   </div>
@@ -1883,7 +1927,7 @@ export default function AdminDashboard() {
                       type="email"
                       value={editingPaciente.email || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: juan@gmail.com"
                     />
                   </div>
@@ -1891,9 +1935,10 @@ export default function AdminDashboard() {
                     <label className="text-xs text-slate-450 font-bold block uppercase">Fecha de Nacimiento</label>
                     <input 
                       type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                       value={editingPaciente.fechaNacimiento || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, fechaNacimiento: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     />
                   </div>
                 </div>
@@ -1936,7 +1981,7 @@ export default function AdminDashboard() {
                 <select 
                   value={newHistorial.pacienteId}
                   onChange={(e) => setNewHistorial({ ...newHistorial, pacienteId: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   required
                 >
                   <option value="" className="bg-slate-900 text-slate-400">Seleccionar paciente...</option>
@@ -1950,9 +1995,10 @@ export default function AdminDashboard() {
                 <label className="text-xs text-slate-550 font-bold block uppercase">Fecha</label>
                 <input 
                   type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                   value={newHistorial.fecha}
                   onChange={(e) => setNewHistorial({ ...newHistorial, fecha: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   required
                 />
               </div>

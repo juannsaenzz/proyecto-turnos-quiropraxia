@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../components/SidebarContext';
 import { 
   Calendar, 
@@ -47,6 +48,8 @@ interface Turno {
   ciudad: string;
   notas: string;
   estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 interface Historial {
@@ -134,6 +137,19 @@ export default function AdminDashboard() {
   const [showGlobalSearchDropdown, setShowGlobalSearchDropdown] = useState(false);
   const globalSearchRef = useRef<HTMLDivElement>(null);
 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setCurrentUserEmail(user.email);
+      }
+    };
+    fetchUser();
+  }, [supabase]);
+
   // Click outside to close global search
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -213,19 +229,14 @@ export default function AdminDashboard() {
 
   // Reset autocomplete states when modals open
   useEffect(() => {
-    if (showNewTurnoModal || showEditTurnoModal) {
+    if (showNewTurnoModal) {
       setPacienteSearchQuery('');
+    }
+    if (showNewTurnoModal || showEditTurnoModal) {
       setShowPacienteDropdown(false);
       setActivePacienteIndex(-1);
     }
   }, [showNewTurnoModal, showEditTurnoModal]);
-
-  // Pre-populate patient search query when editing a turno
-  useEffect(() => {
-    if (editingTurno) {
-      setPacienteSearchQuery(editingTurno.pacienteNombre);
-    }
-  }, [editingTurno]);
 
   // Trigger toast notification helper
   const showToast = (message: string) => {
@@ -379,7 +390,7 @@ export default function AdminDashboard() {
         const filtered = prev.filter(c => c.fecha !== fetchStr);
         return [...filtered, { fecha: fetchStr, ciudad: city, bloque: shift === 'Mañana' ? 'MANANA' : 'TARDE' }];
       });
-      showToast('Agenda de hoy actualizada en la base de datos');
+      showToast(`Agenda del ${currentDate.split('-').reverse().join('/')} en el turno ${shift.toLowerCase()} modificada a ${city}`);
     } catch (error) {
       console.error('Error saving day configuration:', error);
       alert('No se pudo guardar la configuración de la agenda.');
@@ -724,7 +735,8 @@ export default function AdminDashboard() {
           fechaHora: isoDateTime,
           ciudad: updated.ciudad,
           notas: updated.notas,
-          estado: updated.estado
+          estado: updated.estado,
+          updatedBy: currentUserEmail || undefined
         }),
       });
 
@@ -743,7 +755,9 @@ export default function AdminDashboard() {
         hora: creado.fechaHora.split('T')[1].substring(0, 5),
         ciudad: creado.ciudad,
         notas: creado.notas,
-        estado: creado.estado
+        estado: creado.estado,
+        updatedAt: creado.updatedAt,
+        updatedBy: creado.updatedBy
       };
 
       setTurnos(prev => prev.map(t => t.id === nuevoTurnoItem.id ? nuevoTurnoItem : t));
@@ -1103,7 +1117,7 @@ export default function AdminDashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ estado: nuevoEstado }),
+        body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
       });
 
       if (!response.ok) {
@@ -1113,7 +1127,7 @@ export default function AdminDashboard() {
       const actualizado = await response.json();
 
       setTurnos(prevTurnos => 
-        prevTurnos.map(t => t.id === id ? { ...t, estado: actualizado.estado } : t)
+        prevTurnos.map(t => t.id === id ? { ...t, estado: actualizado.estado, updatedAt: actualizado.updatedAt, updatedBy: actualizado.updatedBy } : t)
       );
       showToast(`Turno cambiado a estado ${nuevoEstado}`);
     } catch (err: any) {
@@ -1135,11 +1149,11 @@ export default function AdminDashboard() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ estado: nuevoEstado }),
+        body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
       })));
       
       setTurnos(prevTurnos => 
-        prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado } : t)
+        prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail } : t)
       );
       setSelectedTurnos([]);
       showToast(`${selectedTurnos.length} turnos marcados como ${nuevoEstado}`);
@@ -1257,22 +1271,36 @@ export default function AdminDashboard() {
             Agenda de Turnos
           </h1>
         </div>
+        
         {/* Global Paciente Search */}
-        <div className="relative w-64 md:w-80 hidden sm:block" ref={globalSearchRef}>
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-500" />
+        <div className="absolute left-1/2 -translate-x-1/2 hidden sm:block w-64 md:w-96" ref={globalSearchRef}>
+          <div className="relative w-full">
+            <input
+              type="text"
+              className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500 transition"
+              placeholder="Buscar paciente por nombre o DNI..."
+              value={globalSearchQuery}
+              onChange={(e) => {
+                setGlobalSearchQuery(e.target.value);
+                setShowGlobalSearchDropdown(true);
+              }}
+              onFocus={() => setShowGlobalSearchDropdown(true)}
+            />
+            {globalSearchQuery.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setGlobalSearchQuery('');
+                  setShowGlobalSearchDropdown(false);
+                }}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800 transition"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 pointer-events-none" />
+            )}
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-slate-700 rounded-xl leading-5 bg-slate-950/50 text-slate-300 placeholder-slate-500 focus:outline-none focus:bg-slate-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 sm:text-sm transition-colors"
-            placeholder="Buscar paciente por nombre o DNI..."
-            value={globalSearchQuery}
-            onChange={(e) => {
-              setGlobalSearchQuery(e.target.value);
-              setShowGlobalSearchDropdown(true);
-            }}
-            onFocus={() => setShowGlobalSearchDropdown(true)}
-          />
           {showGlobalSearchDropdown && globalSearchQuery.length > 0 && (
             <div className="absolute mt-2 w-full bg-slate-800 border border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
               {(() => {
@@ -1296,7 +1324,7 @@ export default function AdminDashboard() {
                     }}
                   >
                     <div className="font-bold text-slate-200">{p.nombre}</div>
-                    {p.dni && <div className="text-xs text-slate-400 mt-0.5">DNI: {p.dni}</div>}
+                    {/* DNI removed */}
                   </div>
                 ));
               })()}
@@ -1324,6 +1352,7 @@ export default function AdminDashboard() {
                 
                 <input 
                   type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                   value={currentDate}
                   onChange={(e) => setCurrentDate(e.target.value)}
                   className="px-3.5 py-2 border border-slate-800 bg-slate-950 rounded-xl text-sm font-extrabold focus:outline-none focus:border-emerald-500 text-white cursor-pointer"
@@ -1336,6 +1365,14 @@ export default function AdminDashboard() {
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
+                
+                <button 
+                  onClick={() => setCurrentDate(getTodayFormatted())}
+                  className="px-3.5 py-1.5 ml-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
+                  title="Ir a hoy"
+                >
+                  Hoy
+                </button>
               </div>
 
               {/* Sucursal de Hoy details with override options */}
@@ -1344,72 +1381,24 @@ export default function AdminDashboard() {
                   <MapPin className="h-4.5 w-4.5" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  {isEditingConfig ? (
-                    <>
-                      <div>
-                        <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Sucursal de Hoy</label>
-                        <select 
-                          value={tempCity}
-                          onChange={(e) => setTempCity(e.target.value)}
-                          className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1 text-slate-200 font-extrabold text-sm focus:outline-none pr-5 cursor-pointer"
-                        >
-                          {ciudadesDisponibles.map(c => (
-                            <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Save Exception Button */}
-                      <div className="border-l border-slate-800 pl-3 flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setShowConfirmConfig(true);
-                          }}
-                          disabled={tempCity === selectedCity}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm
-                            ${(tempCity !== selectedCity)
-                              ? 'bg-emerald-600 text-white hover:bg-emerald-500 active:scale-95 cursor-pointer'
-                              : 'bg-slate-950 text-slate-500 cursor-not-allowed border border-slate-800/80 shadow-none'
-                            }
-                          `}
-                          title="Guardar Configuración"
-                        >
-                          <Save className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Guardar</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsEditingConfig(false);
-                            setTempCity(selectedCity);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Sucursal de Hoy</label>
-                        <span className="text-slate-200 font-extrabold text-sm block py-1 pr-4">{selectedCity}</span>
-                      </div>
-                      
-                      <div className="border-l border-slate-800 pl-4 flex items-center">
-                        <button
-                          onClick={() => {
-                            setTempCity(selectedCity);
-                            setIsEditingConfig(true);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
-                          title="Modificar Configuración"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Modificar</span>
-                        </button>
-                      </div>
-                    </>
-                  )}
+                  <div>
+                    <span className="text-slate-200 font-extrabold text-xl block py-1 pr-4 capitalize tracking-tight">{selectedCity}</span>
+                  </div>
+                  
+                  <div className="border-l border-slate-800 pl-4 flex items-center">
+                    <button
+                      onClick={() => {
+                        setTempCity(selectedCity);
+                        setIsEditingConfig(true);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
+                      title="Modificar Configuración"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Modificar</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1433,7 +1422,7 @@ export default function AdminDashboard() {
                     className="w-full md:w-auto px-5 py-2.5 font-bold text-sm text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center gap-2 border border-slate-700 transition"
                   >
                     <UserPlus className="h-4.2 w-4.2" />
-                    <span>+ Registrar Paciente</span>
+                    <span>Registrar Paciente</span>
                   </button>
                 </>
               )}
@@ -1477,6 +1466,14 @@ export default function AdminDashboard() {
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
+                
+                <button 
+                  onClick={() => setCurrentDate(getTodayFormatted())}
+                  className="px-3.5 py-1.5 ml-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
+                  title="Ir a hoy"
+                >
+                  Hoy
+                </button>
               </div>
 
               {/* Quick buttons */}
@@ -1496,7 +1493,7 @@ export default function AdminDashboard() {
                   className="w-full md:w-auto px-5 py-2.5 font-bold text-sm text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-2xl flex items-center justify-center gap-2 border border-slate-700 transition"
                 >
                   <UserPlus className="h-4.2 w-4.2" />
-                  <span>+ Registrar Paciente</span>
+                  <span>Registrar Paciente</span>
                 </button>
               </div>
             </div>
@@ -1538,7 +1535,7 @@ export default function AdminDashboard() {
                       {/* Date and Place Box */}
                       <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
                         <div>
-                          <span className="text-xs text-emerald-400 font-bold block uppercase tracking-widest">Atención Activa</span>
+
                           <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
                             {getFormattedDateLabel(currentDate)}
                           </h2>
@@ -1654,8 +1651,8 @@ export default function AdminDashboard() {
                                 className="absolute left-0 right-0 z-40 pointer-events-none" 
                                 style={{ top: `${timelinePercentage}%` }}
                               >
-                                <div className="absolute left-[6rem] sm:left-[7rem] right-0 h-[2px] bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)] -translate-y-1/2"></div>
-                                <div className="absolute left-[6rem] sm:left-[7rem] w-3 h-3 bg-red-500 rounded-full shadow-[0_0_5px_rgba(239,68,68,0.8)] -translate-x-1.5 -translate-y-1/2"></div>
+                                <div className="absolute left-0 right-0 h-[2px] bg-emerald-600 -translate-y-1/2"></div>
+                                <div className="absolute left-0 w-3 h-3 bg-emerald-600 rounded-full -translate-y-1/2"></div>
                               </div>
                             )}
 
@@ -1665,18 +1662,18 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Appt Card Slot */}
-                            <div className="flex-grow p-2.5 flex flex-col sm:flex-row gap-3">
+                            <div className="flex-grow p-2.5 flex flex-col sm:flex-row gap-3 min-w-0">
                               {matchedAppts.length > 0 ? (
                                 matchedAppts.map((appt) => {
                                   const styles = getEstadoStyles(appt.estado);
                                   return (
                                     <div 
                                       key={appt.id}
-                                      className={`flex-grow p-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
+                                      className={`flex-grow p-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card min-w-0 ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
                                     >
                                       {/* Left: Checkbox & Name */}
-                                      <div className="flex items-center gap-4 md:w-1/3">
-                                        <div className="flex items-center justify-center">
+                                      <div className="flex items-center gap-4 md:w-1/3 min-w-0">
+                                        <div className="flex items-center justify-center flex-shrink-0">
                                           <input 
                                             type="checkbox" 
                                             checked={selectedTurnos.includes(appt.id)} 
@@ -1684,7 +1681,19 @@ export default function AdminDashboard() {
                                             className="w-5 h-5 accent-emerald-500 rounded border-slate-700 cursor-pointer"
                                           />
                                         </div>
-                                        <span className="font-extrabold text-base tracking-tight text-slate-100">{appt.pacienteNombre}</span>
+                                        <div className="flex flex-col min-w-0">
+                                          <span 
+                                            className="font-extrabold text-base tracking-tight text-slate-100 truncate"
+                                            title={appt.pacienteNombre}
+                                          >
+                                            {appt.pacienteNombre}
+                                          </span>
+                                          {appt.updatedAt && appt.updatedBy && (
+                                            <span className="text-[10px] text-slate-400 font-medium">
+                                              Modificado: {new Date(appt.updatedAt).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})} por {appt.updatedBy.split('@')[0]}
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
                                       
                                       {/* Right: State Selector and Actions */}
@@ -1706,16 +1715,17 @@ export default function AdminDashboard() {
                                           <button 
                                             onClick={() => {
                                               setEditingTurno(appt);
+                                              setPacienteSearchQuery(appt.pacienteNombre || '');
                                               setShowEditTurnoModal(true);
                                             }}
-                                            className="p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition"
+                                            className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
                                             title="Editar turno"
                                           >
                                             <Pencil className="h-4 w-4" />
                                           </button>
                                           <button 
                                             onClick={() => handleDeleteTurno(appt.id)}
-                                            className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-950/30 rounded-lg transition"
+                                            className="p-1.5 text-rose-400 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
                                             title="Eliminar turno"
                                           >
                                             <Trash2 className="h-4 w-4" />
@@ -1755,7 +1765,7 @@ export default function AdminDashboard() {
               /* MONTH VIEW MODE */
               <div className="space-y-6">
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                  <span className="text-xs text-emerald-400 font-bold block uppercase tracking-widest">Vista Mensual</span>
+
                   <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
                     {new Date(
                       parseInt(currentDate.split('-')[0], 10),
@@ -1839,7 +1849,16 @@ export default function AdminDashboard() {
                               <div className={`text-[10px] font-bold truncate ${
                                 cell.isCurrentMonth ? 'text-slate-200' : 'text-slate-700'
                               }`}>
-                                <span className="truncate">{sucursalVal}</span>
+                                <span className="hidden sm:inline truncate">{sucursalVal}</span>
+                                <span className="sm:hidden truncate">
+                                  {sucursalVal
+                                    .replace('Rosario del Tala', 'Tala')
+                                    .replace('Gualeguay', 'Gual')
+                                    .replace('Galarza', 'Gal')
+                                    .replace('Cerrado', 'Cerr')
+                                    .replace(' y ', '/')
+                                  }
+                                </span>
                               </div>
 
                               {dateTurnos.length > 0 && (
@@ -1892,37 +1911,128 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* MODAL: CONFIRMAR CONFIGURACION */}
-      {showConfirmConfig && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 rounded-3xl p-6 w-full max-w-md border border-slate-800 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-amber-950/30 text-amber-500 rounded-2xl border border-amber-900/30">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-extrabold text-slate-100">Confirmar Cambio</h3>
+      {/* MODAL: EDITAR AGENDA */}
+      {isEditingConfig && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+          <div className="bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-800">
+            <div className="px-6 py-5 bg-slate-950 border-b border-slate-850 flex justify-between items-center">
+              <span className="font-extrabold text-slate-100 text-lg">Modificar Agenda</span>
+              <button 
+                onClick={() => setIsEditingConfig(false)} 
+                className="text-slate-400 p-1.5 hover:bg-slate-800 rounded-xl transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-              ¿Estás seguro de modificar la sucursal del día {currentDate.split('-').reverse().join('/')} a <strong className="text-emerald-400">{tempCity}</strong> en el turno <strong className="text-emerald-400">{selectedShift}</strong>?
-            </p>
-            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-800/60">
-              <button
-                onClick={() => setShowConfirmConfig(false)}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm bg-slate-950 text-slate-300 hover:text-white border border-slate-800 transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={async () => {
-                  setSelectedCity(tempCity);
-                  await handleSaveConfig(tempCity, selectedShift);
-                  setShowConfirmConfig(false);
-                  setIsEditingConfig(false);
-                }}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white hover:bg-emerald-500 transition shadow-sm"
-              >
-                Sí, guardar
-              </button>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
+                <div className="relative">
+                  <select 
+                    value={tempCity}
+                    onChange={(e) => setTempCity(e.target.value)}
+                    className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                  >
+                    {ciudadesDisponibles.map(c => (
+                      <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-800/60">
+                <button
+                  onClick={() => setIsEditingConfig(false)}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    const affectedTurnos = turnos.filter(t => {
+                      if (t.fechaHora !== currentDate || t.ciudad !== selectedCity) return false;
+                      const hr = parseInt(t.hora.split(':')[0], 10);
+                      if (selectedShift === 'Mañana') return hr < 15;
+                      if (selectedShift === 'Tarde') return hr >= 15;
+                      return false;
+                    });
+                    
+                    let extraMessage = '';
+                    let confirmType: 'warning' | 'danger' | 'info' = 'warning';
+                    
+                    if (affectedTurnos.length > 0) {
+                      if (tempCity === 'Cerrado') {
+                        extraMessage = ` ATENCIÓN: Se eliminarán ${affectedTurnos.length} turnos que estaban agendados en ${selectedCity} para este bloque.`;
+                        confirmType = 'danger';
+                      } else {
+                        extraMessage = ` Hay ${affectedTurnos.length} turnos que serán movidos automáticamente a ${tempCity}.`;
+                      }
+                    }
+
+                    setCustomConfirm({
+                      title: 'Modificar Agenda',
+                      message: `¿Estás seguro de modificar la sucursal del día ${currentDate.split('-').reverse().join('/')} a ${tempCity} en el turno ${selectedShift}?${extraMessage}`,
+                      confirmText: tempCity === 'Cerrado' && affectedTurnos.length > 0 ? 'Sí, modificar y eliminar' : 'Sí, guardar',
+                      cancelText: 'Cancelar',
+                      type: confirmType,
+                      onConfirm: async () => {
+                        try {
+                          if (affectedTurnos.length > 0) {
+                            if (tempCity === 'Cerrado') {
+                              // Delete affected turnos
+                              await Promise.all(affectedTurnos.map(t => fetch(`http://localhost:3000/turnos/${t.id}`, { method: 'DELETE' })));
+                              setTurnos(prev => prev.filter(t => !affectedTurnos.find(at => at.id === t.id)));
+                            } else {
+                              // Move affected turnos
+                              await Promise.all(affectedTurnos.map(t => {
+                                const isoDateTime = `${t.fechaHora}T${t.hora}:00.000Z`;
+                                return fetch(`http://localhost:3000/turnos/${t.id}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    pacienteId: t.pacienteId,
+                                    fechaHora: isoDateTime,
+                                    ciudad: tempCity,
+                                    estado: t.estado,
+                                    notas: t.notas,
+                                    updatedBy: currentUserEmail || undefined
+                                  })
+                                });
+                              }));
+                              setTurnos(prev => prev.map(t => {
+                                if (affectedTurnos.find(at => at.id === t.id)) {
+                                  return { ...t, ciudad: tempCity };
+                                }
+                                return t;
+                              }));
+                            }
+                          }
+                          setSelectedCity(tempCity);
+                          await handleSaveConfig(tempCity, selectedShift);
+                          setIsEditingConfig(false);
+                          
+                          if (affectedTurnos.length > 0) {
+                            showToast(tempCity === 'Cerrado' ? `${affectedTurnos.length} turnos eliminados` : `${affectedTurnos.length} turnos movidos a ${tempCity}`);
+                          }
+                        } catch (err) {
+                          console.error("Error updating affected turnos:", err);
+                          alert("Error al procesar los turnos afectados.");
+                        }
+                      }
+                    });
+                  }}
+                  disabled={tempCity === selectedCity}
+                  className={`px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm ${
+                    tempCity !== selectedCity 
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-500' 
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  Guardar Cambios
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1955,15 +2065,16 @@ export default function AdminDashboard() {
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {
-                        setPacienteSearchQuery(e.target.value);
-                        setShowPacienteDropdown(true);
+                        const val = e.target.value;
+                        setPacienteSearchQuery(val);
+                        setShowPacienteDropdown(val.trim() !== '');
                         setActivePacienteIndex(-1);
                         
                         if (newTurno.pacienteId) {
                           setNewTurno({ ...newTurno, pacienteId: '' });
                         }
                       }}
-                      onFocus={() => setShowPacienteDropdown(true)}
+                      onFocus={() => setShowPacienteDropdown(pacienteSearchQuery.trim() !== '')}
                       onKeyDown={(e) => {
                         if (!showPacienteDropdown) return;
                         
@@ -1995,16 +2106,17 @@ export default function AdminDashboard() {
                           setShowPacienteDropdown(false);
                         }
                       }}
-                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500 transition"
                       required
                     />
                     
-                    {newTurno.pacienteId ? (
+                    {pacienteSearchQuery.length > 0 ? (
                       <button
                         type="button"
                         onClick={() => {
                           setNewTurno({ ...newTurno, pacienteId: '' });
                           setPacienteSearchQuery('');
+                          setShowPacienteDropdown(false);
                         }}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800 transition"
                       >
@@ -2043,12 +2155,7 @@ export default function AdminDashboard() {
                             isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : 'text-slate-300 hover:bg-slate-800/60'
                           }`}
                         >
-                          <div className="flex flex-col">
-                            <span>{p.nombre}</span>
-                            <span className={`text-xs ${isSelected ? 'text-emerald-200' : 'text-slate-500'} font-normal`}>
-                              {p.dni ? `DNI: ${p.dni}` : 'Sin DNI'} {p.telefono ? `· Tél: ${p.telefono}` : ''}
-                            </span>
-                          </div>
+                          <span>{p.nombre}</span>
                           {isSelected && <Check className="h-4 w-4 text-white" />}
                         </div>
                       );
@@ -2081,6 +2188,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
                     type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                     value={newTurno.fechaHora}
                     onChange={(e) => {
                       const newDate = e.target.value;
@@ -2091,58 +2199,67 @@ export default function AdminDashboard() {
                         ciudad: targetCity 
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Hora</label>
-                  <select 
-                    value={newTurno.hora}
-                    onChange={(e) => {
-                      const newHour = e.target.value;
-                      const targetCity = getTargetCityForAppointment(newTurno.fechaHora, newHour);
-                      setNewTurno({ 
-                        ...newTurno, 
-                        hora: newHour,
-                        ciudad: targetCity
-                      });
-                    }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
-                    required
-                  >
-                    {getModalTimeSlots().map(time => (
-                      <option key={time} value={time} className="bg-slate-900 text-slate-200">{time}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={newTurno.hora}
+                      onChange={(e) => {
+                        const newHour = e.target.value;
+                        const targetCity = getTargetCityForAppointment(newTurno.fechaHora, newHour);
+                        setNewTurno({ 
+                          ...newTurno, 
+                          hora: newHour,
+                          ciudad: targetCity
+                        });
+                      }}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                      required
+                    >
+                      {getModalTimeSlots().map(time => (
+                        <option key={time} value={time} className="bg-slate-900 text-slate-200">{time}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
-                  <select 
-                    value={newTurno.ciudad}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
-                    disabled
-                  >
-                    {ciudadesDisponibles.map(c => (
-                      <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={newTurno.ciudad}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
+                      disabled
+                    >
+                      {ciudadesDisponibles.map(c => (
+                        <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 opacity-60 pointer-events-none" />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Estado</label>
-                  <select 
-                    value={newTurno.estado}
-                    onChange={(e) => setNewTurno({ ...newTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
-                  >
-                    <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
-                    <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
-                    <option value="ATENDIDO" className="bg-slate-900 text-slate-200">ATENDIDO (Asistió)</option>
-                    <option value="AUSENTE" className="bg-slate-900 text-slate-200">AUSENTE (Faltó)</option>
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={newTurno.estado}
+                      onChange={(e) => setNewTurno({ ...newTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    >
+                      <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
+                      <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
+                      <option value="ATENDIDO" className="bg-slate-900 text-slate-200">ATENDIDO</option>
+                      <option value="AUSENTE" className="bg-slate-900 text-slate-200">AUSENTE</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -2199,15 +2316,16 @@ export default function AdminDashboard() {
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {
-                        setPacienteSearchQuery(e.target.value);
-                        setShowPacienteDropdown(true);
+                        const val = e.target.value;
+                        setPacienteSearchQuery(val);
+                        setShowPacienteDropdown(val.trim() !== '');
                         setActivePacienteIndex(-1);
                         
                         if (editingTurno.pacienteId) {
                           setEditingTurno({ ...editingTurno, pacienteId: 0 });
                         }
                       }}
-                      onFocus={() => setShowPacienteDropdown(true)}
+                      onFocus={() => setShowPacienteDropdown(pacienteSearchQuery.trim() !== '')}
                       onKeyDown={(e) => {
                         if (!showPacienteDropdown) return;
                         
@@ -2224,14 +2342,14 @@ export default function AdminDashboard() {
                           e.preventDefault();
                           if (activePacienteIndex >= 0 && activePacienteIndex < filteredPatientsForAutocomplete.length) {
                             const p = filteredPatientsForAutocomplete[activePacienteIndex];
-                            setEditingTurno({ ...editingTurno, pacienteId: p.id });
+                            setEditingTurno({ ...editingTurno, pacienteId: p.id, pacienteNombre: p.nombre });
                             setPacienteSearchQuery(p.nombre);
                             setShowPacienteDropdown(false);
                           } else if (activePacienteIndex === filteredPatientsForAutocomplete.length && hasInlineOption) {
                             handleQuickRegisterPacienteWithNameFromEdit(pacienteSearchQuery);
                           } else if (filteredPatientsForAutocomplete.length > 0) {
                             const p = filteredPatientsForAutocomplete[0];
-                            setEditingTurno({ ...editingTurno, pacienteId: p.id });
+                            setEditingTurno({ ...editingTurno, pacienteId: p.id, pacienteNombre: p.nombre });
                             setPacienteSearchQuery(p.nombre);
                             setShowPacienteDropdown(false);
                           }
@@ -2239,16 +2357,17 @@ export default function AdminDashboard() {
                           setShowPacienteDropdown(false);
                         }
                       }}
-                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500 transition"
                       required
                     />
                     
-                    {editingTurno.pacienteId ? (
+                    {pacienteSearchQuery.length > 0 ? (
                       <button
                         type="button"
                         onClick={() => {
-                          setEditingTurno({ ...editingTurno, pacienteId: 0 });
+                          setEditingTurno({ ...editingTurno, pacienteId: 0, pacienteNombre: '' });
                           setPacienteSearchQuery('');
+                          setShowPacienteDropdown(false);
                         }}
                         className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 p-0.5 rounded-full hover:bg-slate-800 transition"
                       >
@@ -2278,7 +2397,7 @@ export default function AdminDashboard() {
                         <div
                           key={p.id}
                           onClick={() => {
-                            setEditingTurno({ ...editingTurno, pacienteId: p.id });
+                            setEditingTurno({ ...editingTurno, pacienteId: p.id, pacienteNombre: p.nombre });
                             setPacienteSearchQuery(p.nombre);
                             setShowPacienteDropdown(false);
                           }}
@@ -2287,12 +2406,7 @@ export default function AdminDashboard() {
                             isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : 'text-slate-300 hover:bg-slate-800/60'
                           }`}
                         >
-                          <div className="flex flex-col">
-                            <span>{p.nombre}</span>
-                            <span className={`text-xs ${isSelected ? 'text-emerald-200' : 'text-slate-500'} font-normal`}>
-                              {p.dni ? `DNI: ${p.dni}` : 'Sin DNI'} {p.telefono ? `· Tél: ${p.telefono}` : ''}
-                            </span>
-                          </div>
+                          <span>{p.nombre}</span>
                           {isSelected && <Check className="h-4 w-4 text-white" />}
                         </div>
                       );
@@ -2325,6 +2439,7 @@ export default function AdminDashboard() {
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
                     type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                     value={editingTurno.fechaHora}
                     onChange={(e) => {
                       const newDate = e.target.value;
@@ -2335,58 +2450,67 @@ export default function AdminDashboard() {
                         ciudad: targetCity 
                       });
                     }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Hora</label>
-                  <select 
-                    value={editingTurno.hora}
-                    onChange={(e) => {
-                      const newHour = e.target.value;
-                      const targetCity = getTargetCityForAppointment(editingTurno.fechaHora, newHour);
-                      setEditingTurno({ 
-                        ...editingTurno, 
-                        hora: newHour,
-                        ciudad: targetCity
-                      });
-                    }}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
-                    required
-                  >
-                    {getModalTimeSlots().map(time => (
-                      <option key={time} value={time} className="bg-slate-900 text-slate-200">{time}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={editingTurno.hora}
+                      onChange={(e) => {
+                        const newHour = e.target.value;
+                        const targetCity = getTargetCityForAppointment(editingTurno.fechaHora, newHour);
+                        setEditingTurno({ 
+                          ...editingTurno, 
+                          hora: newHour,
+                          ciudad: targetCity
+                        });
+                      }}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                      required
+                    >
+                      {getModalTimeSlots().map(time => (
+                        <option key={time} value={time} className="bg-slate-900 text-slate-200">{time}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
-                  <select 
-                    value={editingTurno.ciudad}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
-                    disabled
-                  >
-                    {ciudadesDisponibles.map(c => (
-                      <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={editingTurno.ciudad}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950/80 text-slate-500 rounded-2xl text-sm font-semibold focus:outline-none cursor-not-allowed opacity-60"
+                      disabled
+                    >
+                      {ciudadesDisponibles.map(c => (
+                        <option key={c} value={c} className="bg-slate-900 text-slate-200">{c}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 opacity-60 pointer-events-none" />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Estado</label>
-                  <select 
-                    value={editingTurno.estado}
-                    onChange={(e) => setEditingTurno({ ...editingTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
-                    className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
-                  >
-                    <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
-                    <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
-                    <option value="ATENDIDO" className="bg-slate-900 text-slate-200">ATENDIDO (Asistió)</option>
-                    <option value="AUSENTE" className="bg-slate-900 text-slate-200">AUSENTE (Faltó)</option>
-                  </select>
+                  <div className="relative">
+                    <select 
+                      value={editingTurno.estado}
+                      onChange={(e) => setEditingTurno({ ...editingTurno, estado: e.target.value as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE' })}
+                      className="w-full appearance-none pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    >
+                      <option value="PENDIENTE" className="bg-slate-900 text-slate-200">PENDIENTE</option>
+                      <option value="CONFIRMADO" className="bg-slate-900 text-slate-200">CONFIRMADO</option>
+                      <option value="ATENDIDO" className="bg-slate-900 text-slate-200">ATENDIDO</option>
+                      <option value="AUSENTE" className="bg-slate-900 text-slate-200">AUSENTE</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  </div>
                 </div>
               </div>
 
@@ -2448,7 +2572,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={newPaciente.nombre}
                   onChange={(e) => setNewPaciente({ ...newPaciente, nombre: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                   required
@@ -2476,7 +2600,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={newPaciente.dni}
                         onChange={(e) => setNewPaciente({ ...newPaciente, dni: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: 12345678"
                       />
                     </div>
@@ -2486,7 +2610,7 @@ export default function AdminDashboard() {
                         type="text"
                         value={newPaciente.telefono}
                         onChange={(e) => setNewPaciente({ ...newPaciente, telefono: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: 5493442XXXXXX"
                       />
                     </div>
@@ -2499,7 +2623,7 @@ export default function AdminDashboard() {
                         type="email"
                         value={newPaciente.email}
                         onChange={(e) => setNewPaciente({ ...newPaciente, email: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: juan@gmail.com"
                       />
                     </div>
@@ -2507,9 +2631,10 @@ export default function AdminDashboard() {
                       <label className="text-xs text-slate-400 font-bold block uppercase">Fecha de Nacimiento</label>
                       <input 
                         type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                         value={newPaciente.fechaNacimiento}
                         onChange={(e) => setNewPaciente({ ...newPaciente, fechaNacimiento: e.target.value })}
-                        className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       />
                     </div>
                   </div>
@@ -2562,7 +2687,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={editingPaciente.nombre}
                   onChange={(e) => setEditingPaciente({ ...editingPaciente, nombre: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                   required
@@ -2577,7 +2702,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={editingPaciente.dni || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, dni: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: 12345678"
                     />
                   </div>
@@ -2587,7 +2712,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={editingPaciente.telefono || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, telefono: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: 5493442XXXXXX"
                     />
                   </div>
@@ -2600,7 +2725,7 @@ export default function AdminDashboard() {
                       type="email"
                       value={editingPaciente.email || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: juan@gmail.com"
                     />
                   </div>
@@ -2608,9 +2733,10 @@ export default function AdminDashboard() {
                     <label className="text-xs text-slate-450 font-bold block uppercase">Fecha de Nacimiento</label>
                     <input 
                       type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                       value={editingPaciente.fechaNacimiento || ''}
                       onChange={(e) => setEditingPaciente({ ...editingPaciente, fechaNacimiento: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                     />
                   </div>
                 </div>
@@ -2653,7 +2779,7 @@ export default function AdminDashboard() {
                 <select 
                   value={newHistorial.pacienteId}
                   onChange={(e) => setNewHistorial({ ...newHistorial, pacienteId: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   required
                 >
                   <option value="" className="bg-slate-900 text-slate-400">Seleccionar paciente...</option>
@@ -2667,9 +2793,10 @@ export default function AdminDashboard() {
                 <label className="text-xs text-slate-550 font-bold block uppercase">Fecha</label>
                 <input 
                   type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
                   value={newHistorial.fecha}
                   onChange={(e) => setNewHistorial({ ...newHistorial, fecha: e.target.value })}
-                  className="w-full px-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                   required
                 />
               </div>

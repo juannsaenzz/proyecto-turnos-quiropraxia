@@ -23,6 +23,8 @@ export class TurnosService {
       ciudad: t.ciudad,
       notas: t.notes || t.notas || '',
       estado: t.estado as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE',
+      updatedAt: t.updatedAt ? t.updatedAt.toISOString() : undefined,
+      updatedBy: t.updatedBy,
     };
   }
 
@@ -97,6 +99,7 @@ export class TurnosService {
     if (data.ciudad !== undefined) updateData.ciudad = data.ciudad;
     if (data.notas !== undefined) updateData.notas = data.notas;
     if (data.estado !== undefined) updateData.estado = data.estado as EstadoTurno;
+    if (data.updatedBy !== undefined) updateData.updatedBy = data.updatedBy;
 
     const actualizado = await this.prisma.turno.update({
       where: { id },

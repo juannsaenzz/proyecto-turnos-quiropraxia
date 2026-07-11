@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../../components/SidebarContext';
 import { 
   ArrowLeft, 
@@ -16,7 +17,9 @@ import {
   Edit2,
   Save,
   X,
-  Trash2
+  Trash2,
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
 
 interface Turno {
@@ -27,6 +30,8 @@ interface Turno {
   ciudad: string;
   notas: string;
   estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 interface Paciente {
@@ -41,6 +46,19 @@ interface Paciente {
 export default function HistorialPacientePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { setSidebarOpen } = useSidebar();
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setCurrentUserEmail(session.user.email);
+      }
+    };
+    fetchUser();
+  }, [supabase]);
+
   const pacienteId = parseInt(params.id, 10);
   
   const [paciente, setPaciente] = useState<Paciente | null>(null);
@@ -52,6 +70,15 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const [editNotas, setEditNotas] = useState("");
   const [editEstado, setEditEstado] = useState<Turno['estado']>('PENDIENTE');
   const [isSaving, setIsSaving] = useState(false);
+
+  const [customConfirm, setCustomConfirm] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    confirmText?: string;
+    cancelText?: string;
+    type?: 'danger' | 'warning' | 'info';
+  } | null>(null);
 
   // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
@@ -108,7 +135,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ notas: editNotas })
+        body: JSON.stringify({ notas: editNotas, updatedBy: currentUserEmail || undefined })
       });
 
       if (res.ok) {
@@ -127,26 +154,54 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   };
 
   const handleQuickStatusChange = async (id: number, newEstado: Turno['estado']) => {
-    // Actualización optimista para que cambie al instante
-    setTurnos(prev => prev.map(t => 
-      t.id == id ? { ...t, estado: newEstado } : t
-    ));
-
     try {
       const res = await fetch(`http://localhost:3000/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ estado: newEstado })
+        body: JSON.stringify({ estado: newEstado, updatedBy: currentUserEmail || undefined })
       });
 
       if (!res.ok) {
         console.error("Failed to update turno status");
+      } else {
+        const actualizado = await res.json();
+        setTurnos(prev => prev.map(t => 
+          t.id == id ? { ...t, estado: actualizado.estado, updatedAt: actualizado.updatedAt, updatedBy: actualizado.updatedBy } : t
+        ));
       }
     } catch (error) {
       console.error("Error updating turno status", error);
     }
+  };
+
+  const handleDeleteSingleTurno = (id: number) => {
+    setCustomConfirm({
+      title: 'Eliminar Turno',
+      message: '¿Estás seguro de que deseas eliminar este turno? Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`http://localhost:3000/turnos/${id}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            setTurnos(prev => prev.filter(t => t.id !== id));
+            if (selectedTurnos.includes(id)) {
+              setSelectedTurnos(prev => prev.filter(tId => tId !== id));
+            }
+            setCustomConfirm(null);
+          } else {
+            console.error("Failed to delete turno");
+          }
+        } catch (error) {
+          console.error("Error deleting turno", error);
+        }
+      }
+    });
   };
 
   const toggleTurnoSelection = (id: number) => {
@@ -161,27 +216,37 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado })
+        body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
       })));
-      setTurnos(prev => prev.map(t => selectedTurnos.includes(t.id) ? { ...t, estado } : t));
+      setTurnos(prev => prev.map(t => selectedTurnos.includes(t.id) ? { ...t, estado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail || undefined } : t));
       setSelectedTurnos([]);
     } catch (error) {
       console.error("Error bulk updating", error);
     }
   };
 
-  const deleteSelected = async () => {
+  const deleteSelected = () => {
     if (selectedTurnos.length === 0) return;
-    if (!confirm(`¿Eliminar ${selectedTurnos.length} turnos?`)) return;
-    try {
-      await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
-        method: 'DELETE'
-      })));
-      setTurnos(prev => prev.filter(t => !selectedTurnos.includes(t.id)));
-      setSelectedTurnos([]);
-    } catch (error) {
-      console.error("Error bulk deleting", error);
-    }
+    
+    setCustomConfirm({
+      title: 'Eliminar Turnos',
+      message: `¿Estás seguro de que deseas eliminar ${selectedTurnos.length} turnos? Esta acción no se puede deshacer.`,
+      confirmText: 'Sí, eliminar',
+      cancelText: 'Cancelar',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+            method: 'DELETE'
+          })));
+          setTurnos(prev => prev.filter(t => !selectedTurnos.includes(t.id)));
+          setSelectedTurnos([]);
+          setCustomConfirm(null);
+        } catch (error) {
+          console.error("Error bulk deleting", error);
+        }
+      }
+    });
   };
 
   if (!isMounted) return null;
@@ -210,12 +275,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       const datePart = isoString.split('T')[0];
       const [year, month, day] = datePart.split('-');
       const d = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
-      return new Intl.DateTimeFormat('es-AR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      }).format(d);
-    } catch {
+      const weekday = new Intl.DateTimeFormat('es-AR', { weekday: 'long' }).format(d);
+      const formatted = `${weekday}, ${day}/${month}/${year}`;
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    } catch (e) {
       return '';
     }
   };
@@ -276,9 +339,11 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                   <User className="h-10 w-10 text-emerald-500" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black text-slate-100 tracking-tight">{paciente.nombre}</h2>
+                  <h2 className="text-3xl font-black text-slate-100 tracking-tight break-words break-all">{paciente.nombre}</h2>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-slate-400">
                     {paciente.telefono && <div className="flex items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500" /> {paciente.telefono}</div>}
+                    {paciente.dni && <div className="flex items-center">DNI: {paciente.dni}</div>}
+                    {paciente.email && <div className="flex items-center">{paciente.email}</div>}
                   </div>
                 </div>
               </div>
@@ -318,66 +383,18 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                           />
                         </div>
                         <div className="bg-slate-950 rounded-xl px-4 py-3 border border-emerald-900/30 flex flex-col items-center justify-center min-w-[140px] shadow-inner">
-                          <span className="text-base font-black text-emerald-400 leading-tight capitalize text-center text-balance">{formatDate(turno.fechaHora)}</span>
+                          <span className="text-base font-black text-emerald-400 leading-tight text-center text-balance">{formatDate(turno.fechaHora)}</span>
                         </div>
                         <div className="flex flex-col justify-center">
                           <div className="font-bold text-slate-200 text-xl flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-slate-400" />
                             {formatTime(turno.fechaHora)}
                           </div>
                           <div className="flex items-center gap-1.5 text-sm text-slate-400 mt-1">
-                            <MapPin className="h-3.5 w-3.5" />
                             {turno.ciudad}
                           </div>
                         </div>
                       </div>
 
-                      {editingTurno === turno.id ? (
-                        <>
-                          {/* Middle: Editing Notes */}
-                          <div className="md:w-1/3 flex items-center gap-3">
-                            <textarea
-                              value={editNotas}
-                              onChange={(e) => setEditNotas(e.target.value)}
-                              placeholder="Notas adicionales..."
-                              className="flex-1 bg-slate-950 border border-emerald-900/50 rounded-xl p-3 text-sm text-slate-300 focus:outline-none focus:border-emerald-500 min-h-[60px] resize-none"
-                            />
-                            <div className="flex flex-col gap-2">
-                              <button
-                                onClick={() => handleSaveTurno(turno.id)}
-                                disabled={isSaving}
-                                className="p-2 bg-emerald-600/20 text-emerald-500 hover:bg-emerald-600/30 rounded-lg transition disabled:opacity-50"
-                                title="Guardar"
-                              >
-                                <Save className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={handleCancelEdit}
-                                disabled={isSaving}
-                                className="p-2 bg-rose-600/20 text-rose-500 hover:bg-rose-600/30 rounded-lg transition disabled:opacity-50"
-                                title="Cancelar"
-                              >
-                                <X className="h-5 w-5" />
-                              </button>
-                            </div>
-                          </div>
-                          
-                          {/* Right: Status */}
-                          <div className="md:w-1/4 flex justify-end items-center">
-                            <select
-                              value={turno.estado}
-                              onChange={(e) => handleQuickStatusChange(turno.id, e.target.value as Turno['estado'])}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition ${getEstadoStyles(turno.estado)}`}
-                            >
-                              <option value="PENDIENTE" className="bg-slate-900 text-slate-300">PENDIENTE</option>
-                              <option value="CONFIRMADO" className="bg-slate-900 text-blue-400">CONFIRMADO</option>
-                              <option value="ATENDIDO" className="bg-slate-900 text-emerald-400">ATENDIDO</option>
-                              <option value="AUSENTE" className="bg-slate-900 text-rose-400">AUSENTE</option>
-                            </select>
-                          </div>
-                        </>
-                      ) : (
-                        <>
                           {/* Middle: Notes and Edit button */}
                           <div className="md:w-1/3 flex items-center gap-3">
                             <div className="flex-1 text-sm text-slate-400 bg-slate-950/50 rounded-xl p-3 border border-slate-800/50 min-h-[60px] flex items-center relative group-hover:border-slate-700/80 transition-colors">
@@ -389,28 +406,36 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                             </div>
                             <button
                               onClick={() => handleEditClick(turno)}
-                              className="p-2 text-slate-500 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition"
+                              className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
                               title="Editar nota"
                             >
-                              <Edit2 className="h-5 w-5" />
+                              <Edit2 className="h-4 w-4" />
                             </button>
                           </div>
 
-                          {/* Right: Status */}
-                          <div className="md:w-1/4 flex justify-end items-center">
-                            <select
-                              value={turno.estado}
-                              onChange={(e) => handleQuickStatusChange(turno.id, e.target.value as Turno['estado'])}
-                              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition ${getEstadoStyles(turno.estado)}`}
+                          {/* Right: Status and Delete */}
+                          <div className="md:w-1/4 flex justify-end items-center gap-2">
+                            <div className="relative inline-flex items-center">
+                              <select
+                                value={turno.estado}
+                                onChange={(e) => handleQuickStatusChange(turno.id, e.target.value as Turno['estado'])}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-8 ${getEstadoStyles(turno.estado)}`}
+                              >
+                                <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
+                                <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>
+                                <option value="ATENDIDO" className="text-slate-800 bg-white">ATENDIDO</option>
+                                <option value="AUSENTE" className="text-slate-800 bg-white">AUSENTE</option>
+                              </select>
+                              <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
+                            </div>
+                            <button
+                              onClick={() => handleDeleteSingleTurno(turno.id)}
+                              className="p-1.5 text-rose-400 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
+                              title="Eliminar turno"
                             >
-                              <option value="PENDIENTE" className="bg-slate-900 text-slate-300">PENDIENTE</option>
-                              <option value="CONFIRMADO" className="bg-slate-900 text-blue-400">CONFIRMADO</option>
-                              <option value="ATENDIDO" className="bg-slate-900 text-emerald-400">ATENDIDO</option>
-                              <option value="AUSENTE" className="bg-slate-900 text-rose-400">AUSENTE</option>
-                            </select>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-                        </>
-                      )}
                       
                     </div>
                   ))}
@@ -440,6 +465,102 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-500 hover:bg-emerald-950/50 transition">Atendidos</button>
             <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-400 hover:bg-blue-950/50 transition">Confirmados</button>
             <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-950/50 transition">Ausentes</button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR NOTA */}
+      {editingTurno !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+          <div className="bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-800">
+            <div className="px-6 py-5 bg-slate-950 border-b border-slate-850 flex justify-between items-center">
+              <span className="font-extrabold text-slate-100 text-lg">Modificar Nota</span>
+              <button 
+                onClick={handleCancelEdit} 
+                className="text-slate-400 p-1.5 hover:bg-slate-800 rounded-xl transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-500 font-bold block uppercase">Notas adicionales</label>
+                <textarea
+                  value={editNotas}
+                  onChange={(e) => setEditNotas(e.target.value)}
+                  placeholder="Escribe una nota..."
+                  className="w-full pl-4 pr-4 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition min-h-[100px] resize-none"
+                />
+              </div>
+
+              <div className="flex justify-between items-center mt-8 pt-4 border-t border-slate-800/60">
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-slate-400 hover:text-white transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleSaveTurno(editingTurno)}
+                  disabled={isSaving}
+                  className={`px-5 py-2.5 rounded-xl font-bold text-sm transition disabled:opacity-50 ${
+                    (turnos.find(t => t.id === editingTurno)?.notas || "") !== editNotas
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-100'
+                  }`}
+                >
+                  Guardar Cambios
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRMATION DIALOG MODAL */}
+      {customConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="bg-slate-900 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-800 p-6 space-y-5">
+            <div className="flex items-center space-x-3">
+              {customConfirm.type === 'danger' ? (
+                <div className="p-2 bg-rose-950/60 rounded-xl text-rose-400 border border-rose-900/30">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+              ) : (
+                <div className="p-2 bg-amber-950/60 rounded-xl text-amber-400 border border-amber-900/30">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+              )}
+              <h3 className="font-black text-slate-100 text-base sm:text-lg">{customConfirm.title}</h3>
+            </div>
+            
+            <p className="text-sm font-semibold text-slate-400 leading-relaxed">
+              {customConfirm.message}
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button 
+                type="button" 
+                onClick={() => setCustomConfirm(null)} 
+                className="px-5 py-2.5 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition"
+              >
+                {customConfirm.cancelText || 'Cancelar'}
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  customConfirm.onConfirm();
+                }} 
+                className={`px-5 py-2.5 text-sm font-bold text-white rounded-2xl shadow-lg transition ${
+                  customConfirm.type === 'danger' 
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/20' 
+                    : 'bg-amber-600 hover:bg-amber-500 shadow-amber-950/20'
+                }`}
+              >
+                {customConfirm.confirmText || 'Confirmar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

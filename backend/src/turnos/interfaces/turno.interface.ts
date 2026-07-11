@@ -5,4 +5,6 @@ export interface Turno {
   ciudad: string;
   notas: string;
   estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
+  updatedAt?: Date;
+  updatedBy?: string;
 }

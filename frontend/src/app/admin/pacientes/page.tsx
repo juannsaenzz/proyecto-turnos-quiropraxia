@@ -1195,9 +1195,9 @@ export default function AdminDashboard() {
                   <thead>
                     <tr className="bg-slate-950/60 border-b border-slate-800 text-[10px] font-black uppercase text-slate-550 tracking-wider">
                       <th className="px-6 py-4">Paciente</th>
-                      <th className="px-6 py-4">DNI</th>
-                      <th className="px-6 py-4">Email</th>
-                      <th className="px-6 py-4">Teléfono</th>
+                      <th className="px-6 py-4 hidden md:table-cell">DNI</th>
+                      <th className="px-6 py-4 hidden md:table-cell">Email</th>
+                      <th className="px-6 py-4 hidden md:table-cell">Teléfono</th>
                       <th className="px-6 py-4 text-center">Acción</th>
                     </tr>
                   </thead>
@@ -1205,9 +1205,9 @@ export default function AdminDashboard() {
                     {sortedPacientes.map(p => (
                       <tr key={p.id} className="hover:bg-slate-850/40 transition">
                         <td className="px-6 py-4 font-extrabold text-white text-base capitalize tracking-tight max-w-[100px] sm:max-w-[150px] md:max-w-[200px] lg:max-w-[250px] truncate" title={p.nombre}>{p.nombre}</td>
-                        <td className="px-6 py-4 text-slate-400">{p.dni || '-'}</td>
-                        <td className="px-6 py-4 text-slate-400 font-medium max-w-[100px] sm:max-w-[150px] md:max-w-[200px] truncate" title={p.email || ''}>{p.email || '-'}</td>
-                        <td className="px-6 py-4 font-bold text-emerald-400 whitespace-nowrap">{p.telefono || '-'}</td>
+                        <td className="px-6 py-4 text-slate-400 hidden md:table-cell">{p.dni || '-'}</td>
+                        <td className="px-6 py-4 text-slate-400 font-medium max-w-[100px] sm:max-w-[150px] md:max-w-[200px] truncate hidden md:table-cell" title={p.email || ''}>{p.email || '-'}</td>
+                        <td className="px-6 py-4 font-bold text-emerald-400 whitespace-nowrap hidden md:table-cell">{p.telefono || '-'}</td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button 
@@ -1242,7 +1242,7 @@ export default function AdminDashboard() {
                     ))}
                     {filteredPacientes.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">No se encontraron pacientes.</td>
+                        <td colSpan={5} className="px-6 py-12 text-center text-slate-500">No se encontraron pacientes.</td>
                       </tr>
                     )}
                   </tbody>

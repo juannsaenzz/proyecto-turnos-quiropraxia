@@ -69,6 +69,7 @@ export class TurnosService {
         ciudad: data.ciudad,
         notas: data.notas,
         estado: data.estado as EstadoTurno,
+        updatedBy: data.updatedBy
       },
     });
 

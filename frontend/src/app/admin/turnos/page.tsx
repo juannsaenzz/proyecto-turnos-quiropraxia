@@ -26,7 +26,8 @@ import {
   TrendingUp,
   AlertCircle,
   Pencil,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 
 // Interfaces for our component state
@@ -495,6 +496,8 @@ export default function AdminDashboard() {
             ciudad: t.ciudad,
             notas: t.notas,
             estado: t.estado,
+            updatedAt: t.updatedAt,
+            updatedBy: t.updatedBy
           };
         });
         
@@ -627,7 +630,8 @@ export default function AdminDashboard() {
           fechaHora: isoDateTime,
           ciudad: newTurno.ciudad,
           notas: newTurno.notas,
-          estado: newTurno.estado
+          estado: newTurno.estado,
+          updatedBy: currentUserEmail || undefined
         }),
       });
 
@@ -646,7 +650,9 @@ export default function AdminDashboard() {
         hora: creado.fechaHora.split('T')[1].substring(0, 5),
         ciudad: creado.ciudad,
         notas: creado.notas,
-        estado: creado.estado
+        estado: creado.estado,
+        updatedAt: creado.updatedAt,
+        updatedBy: creado.updatedBy
       };
 
       setTurnos(prev => [...prev, nuevoTurnoItem]);
@@ -702,7 +708,13 @@ export default function AdminDashboard() {
       
       let messages = [];
       if (duplicatedPacienteTurnos.length > 0) {
-        messages.push(`El paciente ${p.nombre} ya tiene un turno para el día ${formattedDate} por la ${newTurnoShift.toLowerCase()} a las ${duplicatedPacienteTurnos[0].hora} hs.`);
+        if (duplicatedPacienteTurnos.length === 1) {
+          messages.push(`El paciente ${p.nombre} ya tiene un turno para el día ${formattedDate} por la ${newTurnoShift.toLowerCase()} a las ${duplicatedPacienteTurnos[0].hora} hs.`);
+        } else {
+          const horas = duplicatedPacienteTurnos.map(t => t.hora);
+          const horasStr = horas.slice(0, -1).join(' hs, ') + ' hs y ' + horas[horas.length - 1] + ' hs';
+          messages.push(`El paciente ${p.nombre} ya tiene ${duplicatedPacienteTurnos.length} turnos para el día ${formattedDate} por la ${newTurnoShift.toLowerCase()} a las ${horasStr}.`);
+        }
       }
       if (conflictos.length > 0) {
         const conflictNames = conflictos.map(c => c.pacienteNombre).join(', ');
@@ -1270,6 +1282,13 @@ export default function AdminDashboard() {
           <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
             Agenda de Turnos
           </h1>
+          <button
+            onClick={() => window.location.reload()}
+            className="hidden sm:flex p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition items-center justify-center border border-transparent hover:border-emerald-900/50"
+            title="Actualizar datos"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
         </div>
         
         {/* Global Paciente Search */}
@@ -1341,7 +1360,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm">
             <div className="flex flex-wrap items-center gap-5">
               {/* Date selection & offsets */}
-              <div className="flex items-center space-x-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button 
                   onClick={() => changeDateOffset(-1)}
                   className="p-2 border border-slate-800 hover:bg-slate-800 rounded-xl transition text-slate-400"
@@ -1368,7 +1387,7 @@ export default function AdminDashboard() {
                 
                 <button 
                   onClick={() => setCurrentDate(getTodayFormatted())}
-                  className="px-3.5 py-1.5 ml-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
+                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
                   title="Ir a hoy"
                 >
                   Hoy
@@ -1382,10 +1401,10 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <div>
-                    <span className="text-slate-200 font-extrabold text-xl block py-1 pr-4 capitalize tracking-tight">{selectedCity}</span>
+                    <span className="text-slate-200 font-extrabold text-xl block py-1 pr-0 sm:pr-4 capitalize tracking-tight">{selectedCity}</span>
                   </div>
                   
-                  <div className="border-l border-slate-800 pl-4 flex items-center">
+                  <div className="border-l-0 sm:border-l border-slate-800 pl-0 sm:pl-4 flex items-center">
                     <button
                       onClick={() => {
                         setTempCity(selectedCity);
@@ -1546,18 +1565,18 @@ export default function AdminDashboard() {
                       </div>
 
                       {/* View & Shift Toggles */}
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                         {/* View Toggle */}
                         <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800 shadow-sm">
                           <button
                             onClick={() => setCalendarViewMode('day')}
-                            className="px-6 py-2 text-xs font-bold rounded-xl transition bg-emerald-600 text-white shadow-md shadow-emerald-900/10"
+                            className="px-5 sm:px-6 py-2 text-xs font-bold rounded-xl transition bg-emerald-600 text-white shadow-md shadow-emerald-900/10"
                           >
                             Día
                           </button>
                           <button
                             onClick={() => setCalendarViewMode('month')}
-                            className="px-6 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200"
+                            className="px-5 sm:px-6 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200"
                           >
                             Mes
                           </button>
@@ -1570,7 +1589,7 @@ export default function AdminDashboard() {
                               setSelectedShift('Mañana');
                               setSelectedCity(getCityForShift('Mañana'));
                             }}
-                            className={`px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
+                            className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
                                selectedShift === 'Mañana' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
@@ -1581,7 +1600,7 @@ export default function AdminDashboard() {
                                setSelectedShift('Tarde');
                                setSelectedCity(getCityForShift('Tarde'));
                              }}
-                             className={`px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
+                             className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
                                selectedShift === 'Tarde' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
                             }`}
                           >
@@ -1669,7 +1688,7 @@ export default function AdminDashboard() {
                                   return (
                                     <div 
                                       key={appt.id}
-                                      className={`flex-grow p-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card min-w-0 ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
+                                      className={`flex-grow p-4 pb-5 md:pb-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card min-w-0 ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
                                     >
                                       {/* Left: Checkbox & Name */}
                                       <div className="flex items-center gap-4 md:w-1/3 min-w-0">
@@ -1689,15 +1708,15 @@ export default function AdminDashboard() {
                                             {appt.pacienteNombre}
                                           </span>
                                           {appt.updatedAt && appt.updatedBy && (
-                                            <span className="text-[10px] text-slate-400 font-medium">
-                                              Modificado: {new Date(appt.updatedAt).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})} por {appt.updatedBy.split('@')[0]}
+                                            <span className="text-[10px] text-slate-400 font-medium truncate block w-full">
+                                              Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false}).replace(', ', ' - ')}hs)
                                             </span>
                                           )}
                                         </div>
                                       </div>
                                       
                                       {/* Right: State Selector and Actions */}
-                                      <div className="flex items-center gap-4 justify-end">
+                                      <div className="flex flex-wrap items-center gap-2 justify-between w-full mt-2 md:mt-0 md:w-auto md:justify-end md:gap-4">
                                         <div className="relative inline-flex items-center">
                                           <select
                                             value={appt.estado}
@@ -1711,21 +1730,21 @@ export default function AdminDashboard() {
                                           </select>
                                           <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
                                         </div>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 ml-auto">
                                           <button 
                                             onClick={() => {
                                               setEditingTurno(appt);
                                               setPacienteSearchQuery(appt.pacienteNombre || '');
                                               setShowEditTurnoModal(true);
                                             }}
-                                            className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
+                                            className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
                                             title="Editar turno"
                                           >
                                             <Pencil className="h-4 w-4" />
                                           </button>
                                           <button 
                                             onClick={() => handleDeleteTurno(appt.id)}
-                                            className="p-1.5 text-rose-400 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-800/60 rounded-xl transition flex items-center justify-center"
+                                            className="p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
                                             title="Eliminar turno"
                                           >
                                             <Trash2 className="h-4 w-4" />
@@ -2274,7 +2293,7 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewTurnoModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">Agendar</button>
               </div>
@@ -2525,7 +2544,7 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button 
                   type="button" 
                   onClick={() => {
@@ -2641,7 +2660,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button 
                   type="button" 
                   onClick={() => {
@@ -2742,7 +2761,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button 
                   type="button" 
                   onClick={() => {
@@ -2812,7 +2831,7 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewHistorialModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">Registrar</button>
               </div>

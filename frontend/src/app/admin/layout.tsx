@@ -7,12 +7,24 @@ import { Calendar, Users, FileText, Menu, X, Check, LogOut } from 'lucide-react'
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import logo3 from '@/assets/3.png';
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setSidebarOpen } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const [userName, setUserName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '';
+        setUserName(fullName.split(' ')[0]);
+      }
+    });
+  }, [supabase.auth]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -44,23 +56,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo Header */}
           <div className="h-20 px-6 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="bg-slate-950 p-1.5 rounded-2xl border border-slate-800 flex-shrink-0 flex items-center justify-center">
-                <svg width="36" height="36" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <text x="1" y="31" fontFamily="Georgia, Times New Roman, serif" fontSize="33" fontWeight="900" fill="#FFFFFF">N</text>
-                  <circle cx="36" cy="6" r="2.5" fill="#4CAF50" />
-                  <circle cx="33" cy="10" r="2.5" fill="#4CAF50" />
-                  <circle cx="31" cy="14" r="2.5" fill="#4CAF50" />
-                  <circle cx="30" cy="18" r="2.5" fill="#4CAF50" />
-                  <circle cx="31" cy="22" r="2.5" fill="#4CAF50" />
-                  <circle cx="33" cy="26" r="2.5" fill="#4CAF50" />
-                  <circle cx="34" cy="30" r="2.5" fill="#4CAF50" />
-                  <circle cx="33" cy="34" r="2.5" fill="#4CAF50" />
-                  <circle cx="30" cy="37" r="2.5" fill="#4CAF50" />
-                  <circle cx="27" cy="39" r="2.5" fill="#4CAF50" />
-                </svg>
+              <div className="bg-slate-950 p-1 rounded-2xl border border-slate-800 flex-shrink-0 flex items-center justify-center">
+                <Image src={logo3} alt="Logo" width={36} height={36} className="object-cover rounded-full" />
               </div>
               <div>
-                <span className="font-extrabold text-slate-100 block leading-tight text-base tracking-tight">NS Quiropraxia</span>
+                <span className="font-extrabold text-slate-100 block leading-tight text-base tracking-tight">Hola, {userName || 'Doc'}</span>
                 <span className="text-[10px] text-emerald-400 font-black tracking-widest uppercase">Consultorio</span>
               </div>
             </div>

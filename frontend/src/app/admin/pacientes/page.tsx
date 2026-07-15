@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
+import logo from '@/assets/3.png';
 import { useRouter } from 'next/navigation';
 import { useSidebar } from '../components/SidebarContext';
 import { 
@@ -25,7 +27,8 @@ import {
   TrendingUp,
   AlertCircle,
   Pencil,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 
 // Interfaces for our component state
@@ -1092,9 +1095,19 @@ export default function AdminDashboard() {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
-              Pacientes
-            </h1>
+            <div className="flex items-center gap-3">
+              <Image src={logo} alt="Logo" width={32} height={32} className="rounded-full object-cover shadow-sm" />
+              <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
+                Pacientes
+              </h1>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition items-center justify-center border border-transparent hover:border-emerald-900/50"
+              title="Actualizar datos"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Global Paciente Search */}

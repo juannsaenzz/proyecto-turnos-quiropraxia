@@ -5,8 +5,9 @@ import { ShieldCheck, LogIn, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import logo from '@/assets/1.png';
+import React, { Suspense } from 'react';
 
-export default function LoginPage() {
+function LoginContent() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
@@ -72,5 +73,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex justify-center items-center">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

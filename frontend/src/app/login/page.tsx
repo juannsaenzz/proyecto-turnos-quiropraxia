@@ -3,6 +3,8 @@
 import { createClient } from '@/utils/supabase/client';
 import { ShieldCheck, LogIn, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import logo from '@/assets/1.png';
 
 export default function LoginPage() {
   const supabase = createClient();
@@ -32,10 +34,10 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center p-4 bg-slate-900 border border-slate-800 rounded-3xl mb-6 shadow-xl shadow-slate-900/50">
-            <ShieldCheck className="h-10 w-10 text-emerald-500" />
+          <div className="inline-flex items-center justify-center bg-slate-900 border border-slate-800 rounded-3xl mb-6 shadow-xl shadow-slate-900/50 overflow-hidden w-24 h-24">
+            <Image src={logo} alt="Logo" width={96} height={96} className="object-cover w-full h-full" />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight mb-2">Panel Administrativo</h1>
+          <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight mb-2">Centro Quiropráctico Nicolás</h1>
           <p className="text-slate-400 font-medium">Ingresa para gestionar turnos y pacientes</p>
         </div>
 

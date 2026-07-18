@@ -338,10 +338,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           <div className="flex items-center space-x-3">
             <button 
               onClick={() => router.back()}
-              className="text-emerald-500 hover:text-emerald-400 p-2 hover:bg-emerald-950/30 rounded-full transition"
+              className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition"
               title="Volver"
             >
-              <ArrowLeft className="h-6 w-6" />
+              <ArrowLeft className="h-4 w-4" />
             </button>
             <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize hidden sm:block">
               Historial de Turnos
@@ -382,14 +382,13 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               
               <div className="bg-slate-950/50 rounded-2xl p-4 border border-slate-800/80 text-center min-w-[140px] relative z-10">
                 <div className="text-3xl font-black text-emerald-400">{turnos.length}</div>
-                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Turnos Totales</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Turnos</div>
               </div>
             </div>
 
             {/* Turnos List */}
             <div>
-              <h3 className="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-emerald-500" />
+              <h3 className="text-xl font-bold text-slate-200 mb-6">
                 Registro de Turnos
               </h3>
               
@@ -508,40 +507,44 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
       {/* Floating Action Bar for Bulk Select */}
       {selectedTurnos.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl flex flex-col w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all overflow-hidden">
           
-          {/* Info and Delete (Top on mobile, Left on desktop) */}
-          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
-                <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
-              </div>
-              <button onClick={() => setSelectedTurnos([])} className="text-xs font-bold text-slate-500 hover:text-slate-300 transition">
-                Cancelar
-              </button>
-            </div>
-            <button onClick={deleteSelected} className="p-2 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0" title="Eliminar Seleccionados">
-              <Trash2 className="h-4 w-4" />
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-slate-800 bg-slate-800/30">
+            <h3 className="text-white font-black text-sm">
+              <span className="text-emerald-400 text-lg mr-1">{selectedTurnos.length}</span> seleccionados
+            </h3>
+            <button onClick={() => setSelectedTurnos([])} className="text-slate-400 hover:text-white transition">
+              <X className="h-5 w-5" />
             </button>
           </div>
           
-          {/* Divider (Horizontal on mobile, Vertical on desktop) */}
-          <div className="h-px w-full sm:h-8 sm:w-px bg-slate-700/50 sm:bg-slate-700 shrink-0"></div>
-          
-          {/* Status buttons (Grid on mobile, Row on desktop) */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-            <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
-              Pendientes
+          {/* Action Body */}
+          <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+            
+            <button onClick={deleteSelected} className="p-2 px-3 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0 gap-2 w-full sm:w-auto" title="Eliminar Seleccionados">
+              <Trash2 className="h-4 w-4" />
+              <span className="sm:hidden text-xs font-bold">Eliminar Seleccionados</span>
             </button>
-            <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
-              Atendidos
-            </button>
-            <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
-              Confirmados
-            </button>
-            <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
-              Ausentes
-            </button>
+            
+            {/* Divider (Vertical on desktop) */}
+            <div className="hidden sm:block h-8 w-px bg-slate-700 shrink-0"></div>
+            
+            {/* Status buttons (Grid on mobile, Row on desktop) */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+              <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
+                Pendientes
+              </button>
+              <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
+                Atendidos
+              </button>
+              <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
+                Confirmados
+              </button>
+              <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
+                Ausentes
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -612,7 +615,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               <h3 className="font-black text-slate-100 text-base sm:text-lg">{customConfirm.title}</h3>
             </div>
             
-            <p className="text-sm font-semibold text-slate-400 leading-relaxed">
+            <p className="text-sm font-semibold text-slate-400 leading-relaxed break-words">
               {customConfirm.message}
             </p>
 

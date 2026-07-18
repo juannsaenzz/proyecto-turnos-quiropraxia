@@ -3,7 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Users, FileText, Menu, X, Check, LogOut, Instagram, Facebook, MessageCircle, MapPin, Mail, Phone } from 'lucide-react';
+import { Calendar, Users, FileText, Menu, X, Check, LogOut, Instagram, Facebook, MessageCircle, MapPin, Mail, Phone, RefreshCw } from 'lucide-react';
 import { SidebarProvider, useSidebar } from './components/SidebarContext';
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClient();
   const [userName, setUserName] = React.useState<string>('');
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
 
   React.useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -28,6 +29,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleSignOut = async () => {
+    setIsLoggingOut(true);
     await supabase.auth.signOut();
     router.push('/login');
   };
@@ -57,9 +59,6 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo Header */}
           <div className="h-20 px-6 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="bg-slate-950 rounded-xl border border-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden w-10 h-10">
-                <Image src={logo1} alt="Logo" width={40} height={40} className="object-cover w-full h-full" />
-              </div>
               <div>
                 <span className="font-extrabold text-slate-100 block leading-tight text-base tracking-tight">Hola, {userName || 'Doc'}</span>
               </div>
@@ -102,10 +101,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-t border-slate-800">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center space-x-3.5 px-5 py-3 rounded-2xl text-sm font-bold transition duration-150 text-slate-400 hover:text-slate-100 hover:bg-slate-800/60"
+            disabled={isLoggingOut}
+            className="w-full flex items-center space-x-3.5 px-5 py-3 rounded-2xl text-sm font-bold transition duration-150 text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <LogOut className="h-5 w-5" />
-            <span>Cerrar sesión</span>
+            {isLoggingOut ? (
+              <RefreshCw className="h-5 w-5 animate-spin text-emerald-400" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
+            <span>{isLoggingOut ? 'Cerrando sesión...' : 'Cerrar sesión'}</span>
           </button>
         </div>
       </aside>

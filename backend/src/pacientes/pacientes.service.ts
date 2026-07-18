@@ -36,15 +36,6 @@ export class PacientesService {
       }
     }
 
-    // Validar email único si está presente
-    if (email) {
-      const emailExistente = await this.prisma.paciente.findUnique({
-        where: { email },
-      });
-      if (emailExistente) {
-        throw new BadRequestException(`El email ${email} ya está registrado`);
-      }
-    }
 
     return this.prisma.paciente.create({
       data: {
@@ -77,16 +68,7 @@ export class PacientesService {
     }
     
     if (data.email !== undefined) {
-      const email = data.email && data.email.trim() !== '' ? data.email.trim() : null;
-      if (email && email !== paciente.email) {
-        const emailExistente = await this.prisma.paciente.findUnique({
-          where: { email },
-        });
-        if (emailExistente) {
-          throw new BadRequestException(`El email ${email} ya está registrado`);
-        }
-      }
-      updateData.email = email;
+      updateData.email = data.email && data.email.trim() !== '' ? data.email.trim() : null;
     }
 
     if (data.telefono !== undefined) {

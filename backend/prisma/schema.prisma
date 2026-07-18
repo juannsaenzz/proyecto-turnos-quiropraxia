@@ -18,7 +18,7 @@ model User {
 model Paciente {
   id               Int                @id @default(autoincrement())
   dni              String?            @unique
-  email            String?            @unique
+  email            String?
   nombre           String
   telefono         String?
   fechaNacimiento  String?

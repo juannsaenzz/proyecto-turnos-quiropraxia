@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import logo from '@/assets/1.png';
+import logo from '@/assets/2.png';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../components/SidebarContext';
@@ -194,6 +194,7 @@ export default function AdminDashboard() {
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [showNewHistorialModal, setShowNewHistorialModal] = useState(false);
   const [showEditPacienteModal, setShowEditPacienteModal] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
   const [editingPaciente, setEditingPaciente] = useState<Paciente | null>(null);
   const [showEditTurnoModal, setShowEditTurnoModal] = useState(false);
   const [editingTurno, setEditingTurno] = useState<Turno | null>(null);
@@ -394,34 +395,39 @@ export default function AdminDashboard() {
     return selectedCity !== defaults.ciudad || selectedShift !== defaults.turno;
   };
 
-  const handleSaveConfig = async (city = selectedCity, shift = selectedShift) => {
+  const handleSaveConfig = async (city = selectedCity, shift: 'Mañana' | 'Tarde' | 'Ninguno' | 'Ambos turnos' = selectedShift) => {
+    const shiftsToSave = shift === 'Ambos turnos' || shift === 'Ninguno' ? ['Mañana', 'Tarde'] : [shift];
+
     try {
-      const response = await fetch('http://localhost:3000/configuracion-dia', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fecha: `${currentDate}_${shift === 'Mañana' ? 'MANANA' : 'TARDE'}`,
-          ciudad: city,
-          bloque: shift === 'Mañana' ? 'MANANA' : 'TARDE',
-        }),
-      });
+      for (const s of shiftsToSave) {
+        const response = await fetch('http://localhost:3000/configuracion-dia', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fecha: `${currentDate}_${s === 'Mañana' ? 'MANANA' : 'TARDE'}`,
+            ciudad: city,
+            bloque: s === 'Mañana' ? 'MANANA' : 'TARDE',
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Error al guardar la configuración');
+        if (!response.ok) {
+          throw new Error(`Error al guardar la configuración para el turno ${s}`);
+        }
+
+        setSavedConfigs(prev => ({
+          ...prev,
+          [s]: { ciudad: city, bloque: s }
+        }));
+        setAllConfigs(prev => {
+          const fetchStr = `${currentDate}_${s === 'Mañana' ? 'MANANA' : 'TARDE'}`;
+          const filtered = prev.filter(c => c.fecha !== fetchStr);
+          return [...filtered, { fecha: fetchStr, ciudad: city, bloque: s === 'Mañana' ? 'MANANA' : 'TARDE' }];
+        });
       }
-
-      setSavedConfigs(prev => ({
-        ...prev,
-        [shift]: { ciudad: city, bloque: shift }
-      }));
-      setAllConfigs(prev => {
-        const fetchStr = `${currentDate}_${shift === 'Mañana' ? 'MANANA' : 'TARDE'}`;
-        const filtered = prev.filter(c => c.fecha !== fetchStr);
-        return [...filtered, { fecha: fetchStr, ciudad: city, bloque: shift === 'Mañana' ? 'MANANA' : 'TARDE' }];
-      });
-      showToast(`Agenda del ${currentDate.split('-').reverse().join('/')} en el turno ${shift.toLowerCase()} modificada a ${city}`);
+      const shiftMsg = shift === 'Ambos turnos' || shift === 'Ninguno' ? 'ambos turnos' : `el turno ${shift.toLowerCase()}`;
+      showToast(`Agenda del ${currentDate.split('-').reverse().join('/')} en ${shiftMsg} modificada a ${city}`);
     } catch (error) {
       console.error('Error saving day configuration:', error);
       alert('No se pudo guardar la configuración de la agenda.');
@@ -934,16 +940,30 @@ export default function AdminDashboard() {
 
   const handleCreatePaciente = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errors: Record<string, string> = {};
     if (!newPaciente.nombre || !newPaciente.nombre.trim()) {
-      alert("El nombre completo es obligatorio");
-      return;
+      errors.nombre = "El nombre completo es obligatorio.";
     }
 
     const dniTrimmed = newPaciente.dni ? newPaciente.dni.trim() : '';
-    if (dniTrimmed && pacientes.some(p => p.dni === dniTrimmed)) {
-      alert("Ya existe un paciente con este DNI");
+    if (dniTrimmed) {
+      if (!/^\d{7,8}$/.test(dniTrimmed)) {
+        errors.dni = "El DNI debe tener 7 u 8 números.";
+      } else if (pacientes.some(p => p.dni === dniTrimmed)) {
+        errors.dni = "Ya existe un paciente con este DNI.";
+      }
+    }
+
+    if (newPaciente.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newPaciente.email.trim())) {
+      errors.email = "Correo electrónico inválido.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({});
 
     try {
       const response = await fetch('http://localhost:3000/pacientes', {
@@ -996,16 +1016,32 @@ export default function AdminDashboard() {
 
   const handleUpdatePaciente = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingPaciente || !editingPaciente.nombre.trim()) {
-      alert("El nombre completo es obligatorio");
-      return;
+    
+    if (!editingPaciente) return;
+
+    const errors: Record<string, string> = {};
+    if (!editingPaciente.nombre.trim()) {
+      errors.nombre = "El nombre completo es obligatorio.";
     }
 
     const dniTrimmed = editingPaciente.dni ? editingPaciente.dni.trim() : '';
-    if (dniTrimmed && pacientes.some(p => p.dni === dniTrimmed && p.id !== editingPaciente.id)) {
-      alert("Ya existe otro paciente con este DNI");
+    if (dniTrimmed) {
+      if (!/^\d{7,8}$/.test(dniTrimmed)) {
+        errors.dni = "El DNI debe tener 7 u 8 números.";
+      } else if (pacientes.some(p => p.dni === dniTrimmed && p.id !== editingPaciente.id)) {
+        errors.dni = "Ya existe otro paciente con este DNI.";
+      }
+    }
+
+    if (editingPaciente.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editingPaciente.email.trim())) {
+      errors.email = "Correo electrónico inválido.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({});
 
     try {
       const response = await fetch(`http://localhost:3000/pacientes/${editingPaciente.id}`, {
@@ -1305,9 +1341,11 @@ export default function AdminDashboard() {
     <>
       {/* Toast Alert */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-[100] bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center space-x-3.5 border border-slate-800">
-          <Check className="h-4 w-4 text-emerald-400 stroke-[3]" />
-          <span className="text-sm font-semibold">{toastMessage}</span>
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-slate-900/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-4 min-w-[280px] max-w-[90vw] text-center">
+          <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-inner">
+            <Check className="h-7 w-7 text-emerald-400 stroke-[3]" />
+          </div>
+          <span className="text-base font-bold text-slate-100 leading-snug">{toastMessage}</span>
         </div>
       )}
 
@@ -1321,8 +1359,8 @@ export default function AdminDashboard() {
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="bg-slate-950 rounded-[10px] border border-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden w-9 h-9">
-              <Image src={logo} alt="Logo" width={36} height={36} className="object-cover w-full h-full" />
+            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
+              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
             </div>
             <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
               Agenda
@@ -1655,13 +1693,11 @@ export default function AdminDashboard() {
 
 
                 {timeSlots.length === 0 ? (
-                  <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center space-y-5">
-                    <div className="h-14 w-14 bg-rose-950/40 text-rose-400 rounded-2xl border border-rose-900/30 flex items-center justify-center">
-                      <AlertCircle className="h-7 w-7" />
-                    </div>
+                  <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm p-12 text-center flex flex-col items-center justify-center">
+                    <Calendar className="h-12 w-12 text-slate-700 mx-auto mb-4" />
                     <div>
-                      <h3 className="text-lg font-bold text-slate-100">Sucursal Cerrada / Sin Turnos</h3>
-                      <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+                      <h3 className="text-lg font-bold text-slate-300">Cerrado</h3>
+                      <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto mb-4">
                         No hay atención configurada para este bloque horario.
                       </p>
                     </div>
@@ -1673,7 +1709,6 @@ export default function AdminDashboard() {
                       }}
                       className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 mt-2"
                     >
-                      <Pencil className="h-4 w-4" />
                       Habilitar Sucursal
                     </button>
                   </div>
@@ -1972,40 +2007,44 @@ export default function AdminDashboard() {
 
       {/* Floating Action Bar for Bulk Select */}
       {selectedTurnos.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl flex flex-col w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all overflow-hidden">
           
-          {/* Info and Delete (Top on mobile, Left on desktop) */}
-          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
-                <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
-              </div>
-              <button onClick={() => setSelectedTurnos([])} className="text-xs font-bold text-slate-500 hover:text-slate-300 transition">
-                Cancelar
-              </button>
-            </div>
-            <button onClick={handleBulkDeleteTurnos} className="p-2 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0" title="Eliminar Seleccionados">
-              <Trash2 className="h-4 w-4" />
+          {/* Header */}
+          <div className="flex justify-between items-center px-4 py-3 border-b border-slate-800 bg-slate-800/30">
+            <h3 className="text-white font-black text-sm">
+              <span className="text-emerald-400 text-lg mr-1">{selectedTurnos.length}</span> seleccionados
+            </h3>
+            <button onClick={() => setSelectedTurnos([])} className="text-slate-400 hover:text-white transition">
+              <X className="h-5 w-5" />
             </button>
           </div>
           
-          {/* Divider (Horizontal on mobile, Vertical on desktop) */}
-          <div className="h-px w-full sm:h-8 sm:w-px bg-slate-700/50 sm:bg-slate-700 shrink-0"></div>
-          
-          {/* Status buttons (Grid on mobile, Row on desktop) */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-            <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
-              Pendientes
+          {/* Action Body */}
+          <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+            
+            <button onClick={handleBulkDeleteTurnos} className="p-2 px-3 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0 gap-2 w-full sm:w-auto" title="Eliminar Seleccionados">
+              <Trash2 className="h-4 w-4" />
+              <span className="sm:hidden text-xs font-bold">Eliminar Seleccionados</span>
             </button>
-            <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
-              Atendidos
-            </button>
-            <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
-              Confirmados
-            </button>
-            <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
-              Ausentes
-            </button>
+            
+            {/* Divider (Vertical on desktop) */}
+            <div className="hidden sm:block h-8 w-px bg-slate-700 shrink-0"></div>
+            
+            {/* Status buttons (Grid on mobile, Row on desktop) */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+              <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
+                Pendientes
+              </button>
+              <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
+                Atendidos
+              </button>
+              <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
+                Confirmados
+              </button>
+              <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
+                Ausentes
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2072,7 +2111,7 @@ export default function AdminDashboard() {
 
                     setCustomConfirm({
                       title: 'Modificar Agenda',
-                      message: `¿Estás seguro de modificar la sucursal del día ${currentDate.split('-').reverse().join('/')} a ${tempCity} en el turno ${selectedShift}?${extraMessage}`,
+                      message: `¿Estás seguro de modificar la sucursal del día ${currentDate.split('-').reverse().join('/')} a ${tempCity} en el turno ${selectedShift === 'Ninguno' ? 'Ambos turnos' : selectedShift}?${extraMessage}`,
                       confirmText: tempCity === 'Cerrado' && affectedTurnos.length > 0 ? 'Sí, modificar y eliminar' : 'Sí, guardar',
                       cancelText: 'Cancelar',
                       type: confirmType,
@@ -2109,7 +2148,7 @@ export default function AdminDashboard() {
                             }
                           }
                           setSelectedCity(tempCity);
-                          await handleSaveConfig(tempCity, selectedShift);
+                          await handleSaveConfig(tempCity, selectedShift === 'Ninguno' ? 'Ambos turnos' : selectedShift);
                           setIsEditingConfig(false);
                           
                           if (affectedTurnos.length > 0) {
@@ -2661,7 +2700,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleCreatePaciente} className="p-6 space-y-4">
+            <form onSubmit={handleCreatePaciente} className="p-6 space-y-4" noValidate>
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-500 font-bold flex items-center gap-1 uppercase">
                   Nombre Completo <span className="text-rose-500 font-black text-sm">*</span>
@@ -2670,12 +2709,15 @@ export default function AdminDashboard() {
                 <input 
                   type="text"
                   value={newPaciente.nombre}
-                  onChange={(e) => setNewPaciente({ ...newPaciente, nombre: e.target.value })}
-                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  onChange={(e) => {
+                    setNewPaciente({ ...newPaciente, nombre: e.target.value });
+                    if (formErrors.nombre) setFormErrors({ ...formErrors, nombre: undefined });
+                  }}
+                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : 'border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700'}`}
                   placeholder="Ej: Juan Pérez"
                   autoFocus
-                  required
                 />
+                {formErrors.nombre && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.nombre}</span>}
               </div>
 
               {/* Toggle optional section */}
@@ -2698,17 +2740,23 @@ export default function AdminDashboard() {
                       <input 
                         type="text"
                         value={newPaciente.dni}
-                        onChange={(e) => setNewPaciente({ ...newPaciente, dni: e.target.value })}
-                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        onChange={(e) => {
+                          setNewPaciente({ ...newPaciente, dni: e.target.value.replace(/\D/g, '').slice(0, 8) });
+                          if (formErrors.dni) setFormErrors({ ...formErrors, dni: undefined });
+                        }}
+                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
                         placeholder="Ej: 12345678"
                       />
+                      {formErrors.dni && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.dni}</span>}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs text-slate-400 font-bold block uppercase">Teléfono</label>
                       <input 
                         type="text"
                         value={newPaciente.telefono}
-                        onChange={(e) => setNewPaciente({ ...newPaciente, telefono: e.target.value })}
+                        onChange={(e) => {
+                          setNewPaciente({ ...newPaciente, telefono: e.target.value.replace(/\D/g, '') });
+                        }}
                         className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                         placeholder="Ej: 5493442XXXXXX"
                       />
@@ -2721,10 +2769,14 @@ export default function AdminDashboard() {
                       <input 
                         type="email"
                         value={newPaciente.email}
-                        onChange={(e) => setNewPaciente({ ...newPaciente, email: e.target.value })}
-                        className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                        onChange={(e) => {
+                          setNewPaciente({ ...newPaciente, email: e.target.value });
+                          if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                        }}
+                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
                         placeholder="Ej: juan@gmail.com"
                       />
+                      {formErrors.email && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.email}</span>}
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-xs text-slate-400 font-bold block uppercase">Fecha de Nacimiento</label>
@@ -2776,7 +2828,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdatePaciente} className="p-6 space-y-4">
+            <form onSubmit={handleUpdatePaciente} className="p-6 space-y-4" noValidate>
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-500 font-bold flex items-center gap-1 uppercase">
                   Nombre Completo <span className="text-rose-500 font-black text-sm">*</span>
@@ -2785,12 +2837,15 @@ export default function AdminDashboard() {
                 <input 
                   type="text"
                   value={editingPaciente.nombre}
-                  onChange={(e) => setEditingPaciente({ ...editingPaciente, nombre: e.target.value })}
-                  className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
+                  onChange={(e) => {
+                    setEditingPaciente({ ...editingPaciente, nombre: e.target.value });
+                    if (formErrors.nombre) setFormErrors({ ...formErrors, nombre: undefined });
+                  }}
+                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : 'border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700'}`}
                   placeholder="Ej: Juan Pérez"
                   autoFocus
-                  required
                 />
+                {formErrors.nombre && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.nombre}</span>}
               </div>
 
               <div className="space-y-4 border-t border-slate-800 pt-4">
@@ -2800,17 +2855,23 @@ export default function AdminDashboard() {
                     <input 
                       type="text"
                       value={editingPaciente.dni || ''}
-                      onChange={(e) => setEditingPaciente({ ...editingPaciente, dni: e.target.value })}
-                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, dni: e.target.value.replace(/\D/g, '').slice(0, 8) });
+                        if (formErrors.dni) setFormErrors({ ...formErrors, dni: undefined });
+                      }}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
                       placeholder="Ej: 12345678"
                     />
+                    {formErrors.dni && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.dni}</span>}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-450 font-bold block uppercase">Teléfono</label>
                     <input 
                       type="text"
                       value={editingPaciente.telefono || ''}
-                      onChange={(e) => setEditingPaciente({ ...editingPaciente, telefono: e.target.value })}
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, telefono: e.target.value.replace(/\D/g, '') });
+                      }}
                       className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
                       placeholder="Ej: 5493442XXXXXX"
                     />
@@ -2823,10 +2884,14 @@ export default function AdminDashboard() {
                     <input 
                       type="email"
                       value={editingPaciente.email || ''}
-                      onChange={(e) => setEditingPaciente({ ...editingPaciente, email: e.target.value })}
-                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, email: e.target.value });
+                        if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                      }}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
                       placeholder="Ej: juan@gmail.com"
                     />
+                    {formErrors.email && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.email}</span>}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-450 font-bold block uppercase">Fecha de Nacimiento</label>
@@ -2937,7 +3002,7 @@ export default function AdminDashboard() {
               <h3 className="font-black text-slate-100 text-base sm:text-lg">{customConfirm.title}</h3>
             </div>
             
-            <p className="text-sm font-semibold text-slate-400 leading-relaxed">
+            <p className="text-sm font-semibold text-slate-400 leading-relaxed break-words">
               {customConfirm.message}
             </p>
 

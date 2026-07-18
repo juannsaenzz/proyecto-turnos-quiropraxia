@@ -37,6 +37,10 @@ export async function GET(request: Request) {
         redirectUrl = `https://${forwardedHost}${next}`
       }
       
+      // Append a timestamp to prevent the browser from using a cached 307 redirect to /login
+      const separator = redirectUrl.includes('?') ? '&' : '?'
+      redirectUrl = `${redirectUrl}${separator}t=${Date.now()}`
+      
       const response = NextResponse.redirect(redirectUrl)
       
       // Manually copy cookies to the response to bypass Next.js bug

@@ -323,9 +323,9 @@ export default function AdminDashboard() {
     const fetchOverride = async () => {
       try {
         const [resLegacy, resManana, resTarde] = await Promise.all([
-          fetch(`http://localhost:3000/configuracion-dia/${currentDate}`).catch(() => null),
-          fetch(`http://localhost:3000/configuracion-dia/${currentDate}_MANANA`).catch(() => null),
-          fetch(`http://localhost:3000/configuracion-dia/${currentDate}_TARDE`).catch(() => null),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}`).catch(() => null),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}_MANANA`).catch(() => null),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}_TARDE`).catch(() => null),
         ]);
 
         const parseJson = async (res: Response | null) => {
@@ -400,7 +400,7 @@ export default function AdminDashboard() {
 
     try {
       for (const s of shiftsToSave) {
-        const response = await fetch('http://localhost:3000/configuracion-dia', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -436,7 +436,7 @@ export default function AdminDashboard() {
 
   const handleSaveHistorialNote = async (pacienteId: number, fechaStr: string, notas: string) => {
     try {
-      const response = await fetch('http://localhost:3000/historial', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -449,7 +449,7 @@ export default function AdminDashboard() {
         throw new Error('Error al guardar la nota clínica');
       }
       // Refresh clinical history from database
-      const resHistorial = await fetch('http://localhost:3000/historial');
+      const resHistorial = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
       if (resHistorial.ok) {
         const data = await resHistorial.json();
         setHistoriales(data);
@@ -508,7 +508,7 @@ export default function AdminDashboard() {
     const loadDbData = async () => {
       try {
         // 1. Fetch Pacientes
-        const resPacientes = await fetch('http://localhost:3000/pacientes');
+        const resPacientes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`);
         if (!resPacientes.ok) throw new Error('Error al cargar pacientes');
         const dataPacientes = await resPacientes.json();
         
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
         }
 
         // 2. Fetch Turnos
-        const resTurnos = await fetch('http://localhost:3000/turnos');
+        const resTurnos = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`);
         if (!resTurnos.ok) throw new Error('Error al cargar turnos');
         const dataTurnos = await resTurnos.json();
         const mappedTurnos = dataTurnos.map((t: any) => {
@@ -542,7 +542,7 @@ export default function AdminDashboard() {
         }
 
         // 2.5 Fetch All Configs
-        const resConfigs = await fetch('http://localhost:3000/configuracion-dia');
+        const resConfigs = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`);
         if (!resConfigs.ok) throw new Error('Error al cargar configuraciones');
         const dataConfigs = await resConfigs.json();
         
@@ -551,7 +551,7 @@ export default function AdminDashboard() {
         }
 
         // 3. Fetch Historiales
-        const resHistorial = await fetch('http://localhost:3000/historial');
+        const resHistorial = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
         if (!resHistorial.ok) throw new Error('Error al cargar historiales');
         const dataHistorial = await resHistorial.json();
         
@@ -656,7 +656,7 @@ export default function AdminDashboard() {
   // Handlers
   const executeCreateTurno = async (p: Paciente, isoDateTime: string, timeLabel: string) => {
     try {
-      const response = await fetch('http://localhost:3000/turnos', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -773,7 +773,7 @@ export default function AdminDashboard() {
   const executeUpdateTurno = async (updated: Turno) => {
     const isoDateTime = `${updated.fechaHora}T${updated.hora}:00.000Z`;
     try {
-      const response = await fetch(`http://localhost:3000/turnos/${updated.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${updated.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -879,7 +879,7 @@ export default function AdminDashboard() {
   const handleQuickRegisterPacienteWithName = async (name: string) => {
     if (!name || !name.trim()) return;
     try {
-      const response = await fetch('http://localhost:3000/pacientes', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -909,7 +909,7 @@ export default function AdminDashboard() {
   const handleQuickRegisterPacienteWithNameFromEdit = async (name: string) => {
     if (!name || !name.trim()) return;
     try {
-      const response = await fetch('http://localhost:3000/pacientes', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -966,7 +966,7 @@ export default function AdminDashboard() {
     setFormErrors({});
 
     try {
-      const response = await fetch('http://localhost:3000/pacientes', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1044,7 +1044,7 @@ export default function AdminDashboard() {
     setFormErrors({});
 
     try {
-      const response = await fetch(`http://localhost:3000/pacientes/${editingPaciente.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1087,7 +1087,7 @@ export default function AdminDashboard() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const response = await fetch(`http://localhost:3000/pacientes/${id}`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${id}`, {
             method: 'DELETE',
           });
 
@@ -1121,7 +1121,7 @@ export default function AdminDashboard() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const response = await fetch(`http://localhost:3000/turnos/${id}`, {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE',
           });
 
@@ -1151,7 +1151,7 @@ export default function AdminDashboard() {
     if (!p) return;
 
     try {
-      const response = await fetch('http://localhost:3000/historial', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1192,7 +1192,7 @@ export default function AdminDashboard() {
   const updateTurnoEstado = async (id: number, nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     setSelectedTurnos([]);
     try {
-      const response = await fetch(`http://localhost:3000/turnos/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1231,7 +1231,7 @@ export default function AdminDashboard() {
       type: 'warning',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -1261,7 +1261,7 @@ export default function AdminDashboard() {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE',
           })));
           
@@ -2120,13 +2120,13 @@ export default function AdminDashboard() {
                           if (affectedTurnos.length > 0) {
                             if (tempCity === 'Cerrado') {
                               // Delete affected turnos
-                              await Promise.all(affectedTurnos.map(t => fetch(`http://localhost:3000/turnos/${t.id}`, { method: 'DELETE' })));
+                              await Promise.all(affectedTurnos.map(t => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, { method: 'DELETE' })));
                               setTurnos(prev => prev.filter(t => !affectedTurnos.find(at => at.id === t.id)));
                             } else {
                               // Move affected turnos
                               await Promise.all(affectedTurnos.map(t => {
                                 const isoDateTime = `${t.fechaHora}T${t.hora}:00.000Z`;
-                                return fetch(`http://localhost:3000/turnos/${t.id}`, {
+                                return fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, {
                                   method: 'PUT',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({

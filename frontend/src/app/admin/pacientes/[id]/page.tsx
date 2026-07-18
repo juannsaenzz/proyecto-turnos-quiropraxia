@@ -109,8 +109,8 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     const fetchData = async () => {
       try {
         const [pacienteRes, turnosRes] = await Promise.all([
-          fetch(`http://localhost:3000/pacientes/${pacienteId}`),
-          fetch('http://localhost:3000/turnos')
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${pacienteId}`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`)
         ]);
 
         if (pacienteRes.ok) {
@@ -151,7 +151,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const handleSaveTurno = async (id: number) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:3000/turnos/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -176,7 +176,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
   const handleQuickStatusChange = async (id: number, newEstado: Turno['estado']) => {
     try {
-      const res = await fetch(`http://localhost:3000/turnos/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -206,7 +206,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'danger',
       onConfirm: async () => {
         try {
-          const res = await fetch(`http://localhost:3000/turnos/${id}`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE'
           });
           if (res.ok) {
@@ -241,7 +241,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'warning',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
@@ -267,7 +267,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'danger',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE'
           })));
           setTurnos(prev => prev.filter(t => !selectedTurnos.includes(t.id)));

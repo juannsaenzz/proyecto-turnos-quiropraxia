@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import logo from '@/assets/3.png';
+import logo from '@/assets/1.png';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../components/SidebarContext';
@@ -29,7 +29,8 @@ import {
   AlertCircle,
   Pencil,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ArrowUp
 } from 'lucide-react';
 
 // Interfaces for our component state
@@ -151,7 +152,7 @@ export default function AdminDashboard() {
       }
     };
     fetchUser();
-  }, [supabase]);
+  }, []);
 
   // Click outside to close global search
   useEffect(() => {
@@ -228,6 +229,33 @@ export default function AdminDashboard() {
   // Autocomplete search state for Pacientes inside Agendar Turno modal
   const [pacienteSearchQuery, setPacienteSearchQuery] = useState('');
   const [showPacienteDropdown, setShowPacienteDropdown] = useState(false);
+
+  // Scroll to top FAB state
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container');
+    const target = scrollContainer || window;
+    
+    const handleScroll = () => {
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+      if (scrollTop > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    target.addEventListener('scroll', handleScroll);
+    return () => target.removeEventListener('scroll', handleScroll as EventListener);
+  }, []);
+
+  // Clear bulk selection when major views or modals change
+  useEffect(() => {
+    if (selectedTurnos.length > 0) {
+      setSelectedTurnos([]);
+    }
+  }, [currentDate, activeTab, calendarViewMode, selectedShift, showNewTurnoModal, showEditTurnoModal, isEditingConfig, showNewPacienteModal, showEditPacienteModal, showNewHistorialModal]);
+
   const [activePacienteIndex, setActivePacienteIndex] = useState(-1);
 
   // Reset autocomplete states when modals open
@@ -571,10 +599,10 @@ export default function AdminDashboard() {
         }
       }
     } else if (selectedShift === 'Tarde') {
-      // 15:00 to 20:30 (last slot starts at 20:15)
+      // 15:00 to 20:45 (last slot starts at 20:30)
       for (let hour = 15; hour < 21; hour++) {
         for (let min = 0; min < 60; min += 15) {
-          if (hour === 20 && min > 15) break; // Stop at 20:15 (ends 20:30)
+          if (hour === 20 && min > 30) break; // Stop at 20:30 (ends 20:45)
           const hh = String(hour).padStart(2, '0');
           const mm = String(min).padStart(2, '0');
           slots.push(`${hh}:${mm}`);
@@ -1046,6 +1074,7 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteTurno = (id: number) => {
+    setSelectedTurnos([]);
     const appt = turnos.find(t => t.id === id);
     const details = appt ? ` de las ${appt.hora} hs para ${appt.pacienteNombre}` : '';
     setCustomConfirm({
@@ -1125,6 +1154,7 @@ export default function AdminDashboard() {
   };
 
   const updateTurnoEstado = async (id: number, nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+    setSelectedTurnos([]);
     try {
       const response = await fetch(`http://localhost:3000/turnos/${id}`, {
         method: 'PUT',
@@ -1156,25 +1186,34 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleBulkUpdateEstado = async (nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
-    try {
-      await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
-      })));
-      
-      setTurnos(prevTurnos => 
-        prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail } : t)
-      );
-      setSelectedTurnos([]);
-      showToast(`${selectedTurnos.length} turnos marcados como ${nuevoEstado}`);
-    } catch (err: any) {
-      console.error(err);
-      alert('Error al actualizar los turnos en lote');
-    }
+  const handleBulkUpdateEstado = (nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+    setCustomConfirm({
+      title: `Cambiar a ${nuevoEstado}`,
+      message: `¿Estás seguro de que deseas marcar los ${selectedTurnos.length} turnos seleccionados como ${nuevoEstado}?`,
+      confirmText: 'Guardar Cambios',
+      cancelText: 'Cancelar',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
+          })));
+          
+          setTurnos(prevTurnos => 
+            prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail } : t)
+          );
+          setSelectedTurnos([]);
+          showToast(`${selectedTurnos.length} turnos marcados como ${nuevoEstado}`);
+        } catch (err: any) {
+          console.error(err);
+          alert('Error al actualizar los turnos en lote');
+        }
+      }
+    });
   };
 
   const handleBulkDeleteTurnos = () => {
@@ -1273,31 +1312,33 @@ export default function AdminDashboard() {
       )}
 
       {/* Top Header */}
-      <header className="h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex items-center justify-between -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 sm:-mt-6 lg:-mt-8 mb-6">
-        <div className="flex items-center space-x-4">
+      <header className="h-auto sm:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center mb-6 py-4 sm:py-0 gap-4 sm:gap-0">
+        <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
+            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
           >
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex items-center gap-3">
-            <Image src={logo} alt="Logo" width={32} height={32} className="rounded-full object-cover shadow-sm" />
+            <div className="bg-slate-950 rounded-[10px] border border-slate-800 flex-shrink-0 flex items-center justify-center overflow-hidden w-9 h-9">
+              <Image src={logo} alt="Logo" width={36} height={36} className="object-cover w-full h-full" />
+            </div>
             <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
               Agenda
             </h1>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="flex p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-950/30 rounded-lg transition items-center justify-center border border-transparent hover:border-emerald-900/50"
+            className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group"
             title="Actualizar datos"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
           </button>
         </div>
         
         {/* Global Paciente Search */}
-        <div className="absolute left-1/2 -translate-x-1/2 hidden sm:block w-64 md:w-96" ref={globalSearchRef}>
+        <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2 w-full sm:w-64 md:w-96" ref={globalSearchRef}>
           <div className="relative w-full">
             <input
               type="text"
@@ -1390,37 +1431,29 @@ export default function AdminDashboard() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 
-                <button 
-                  onClick={() => setCurrentDate(getTodayFormatted())}
-                  className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
-                  title="Ir a hoy"
-                >
-                  Hoy
-                </button>
               </div>
 
               {/* Sucursal de Hoy details with override options */}
-              <div className="flex items-center space-x-3.5 border-l border-slate-800 pl-5">
+              <div className="flex items-center space-x-3.5 border-l-0 sm:border-l border-slate-800 pl-0 sm:pl-5">
                 <div className="p-2 bg-emerald-950/40 text-emerald-400 rounded-xl border border-emerald-900/30">
                   <MapPin className="h-4.5 w-4.5" />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <div>
-                    <span className="text-slate-200 font-extrabold text-xl block py-1 pr-0 sm:pr-4 capitalize tracking-tight">{selectedCity}</span>
+                    <span className="text-slate-200 font-extrabold text-xl block py-1 capitalize tracking-tight">{selectedCity}</span>
                   </div>
                   
-                  <div className="border-l-0 sm:border-l border-slate-800 pl-0 sm:pl-4 flex items-center">
+                  <div className="flex items-center">
                     <button
                       onClick={() => {
                         setTempCity(selectedCity);
                         setIsEditingConfig(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm bg-slate-950 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800/80"
+                      className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
                       title="Modificar Configuración"
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Modificar</span>
+                      <Pencil className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -1433,10 +1466,13 @@ export default function AdminDashboard() {
                 <>
                   <button 
                     onClick={() => {
-                      setNewTurno({ ...newTurno, fechaHora: currentDate, ciudad: selectedCity });
+                      if (selectedCity === 'Cerrado') return;
+                      const defaultHour = selectedShift === 'Mañana' ? '09:00' : '15:00';
+                      setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                       setShowNewTurnoModal(true);
                     }}
-                    className="w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition"
+                    disabled={selectedCity === 'Cerrado'}
+                    className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-500'}`}
                   >
                     <Plus className="h-4.5 w-4.5" />
                     <span>Nuevo Turno</span>
@@ -1491,23 +1527,19 @@ export default function AdminDashboard() {
                   <ChevronRight className="h-4 w-4" />
                 </button>
                 
-                <button 
-                  onClick={() => setCurrentDate(getTodayFormatted())}
-                  className="px-3.5 py-1.5 ml-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition"
-                  title="Ir a hoy"
-                >
-                  Hoy
-                </button>
               </div>
 
               {/* Quick buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 
                   onClick={() => {
-                    setNewTurno({ ...newTurno, fechaHora: currentDate, ciudad: selectedCity });
+                    if (selectedCity === 'Cerrado') return;
+                    const defaultHour = selectedShift === 'Mañana' ? '09:00' : '15:00';
+                    setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                     setShowNewTurnoModal(true);
                   }}
-                  className="w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl flex items-center justify-center gap-2 shadow-sm transition"
+                  disabled={selectedCity === 'Cerrado'}
+                  className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-500'}`}
                 >
                   <Plus className="h-4.5 w-4.5" />
                   <span>Nuevo Turno</span>
@@ -1564,9 +1596,13 @@ export default function AdminDashboard() {
                             {getFormattedDateLabel(currentDate)}
                           </h2>
                         </div>
-                        <div className="bg-slate-950 px-4 py-2 rounded-2xl text-xs font-bold uppercase tracking-wider border border-slate-800 text-slate-300">
-                          {selectedCity}
-                        </div>
+                        <button 
+                          onClick={() => setCurrentDate(getTodayFormatted())}
+                          className="px-4 py-2 w-fit bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold uppercase rounded-2xl border border-emerald-900/50 hover:border-emerald-500/50 transition shadow-sm tracking-wider"
+                          title="Ir a hoy"
+                        >
+                          Ir a hoy
+                        </button>
                       </div>
 
                       {/* View & Shift Toggles */}
@@ -1686,14 +1722,14 @@ export default function AdminDashboard() {
                             </div>
 
                             {/* Appt Card Slot */}
-                            <div className="flex-grow p-2.5 flex flex-col sm:flex-row gap-3 min-w-0">
+                            <div className="flex-grow p-2.5 flex flex-wrap gap-3 min-w-0">
                               {matchedAppts.length > 0 ? (
                                 matchedAppts.map((appt) => {
                                   const styles = getEstadoStyles(appt.estado);
                                   return (
                                     <div 
                                       key={appt.id}
-                                      className={`flex-grow p-4 pb-5 md:pb-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card min-w-0 ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
+                                      className={`flex-1 min-w-[min(100%,400px)] p-4 pb-5 md:pb-4 rounded-2xl transition duration-150 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm relative group/card ${selectedTurnos.includes(appt.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : styles.card}`}
                                     >
                                       {/* Left: Checkbox & Name */}
                                       <div className="flex items-center gap-4 md:w-1/3 min-w-0">
@@ -1707,13 +1743,13 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex flex-col min-w-0">
                                           <span 
-                                            className="font-extrabold text-base tracking-tight text-slate-100 truncate"
+                                            className="font-extrabold text-base tracking-tight text-slate-100 break-words"
                                             title={appt.pacienteNombre}
                                           >
                                             {appt.pacienteNombre}
                                           </span>
                                           {appt.updatedAt && appt.updatedBy && (
-                                            <span className="text-[10px] text-slate-400 font-medium truncate block w-full">
+                                            <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5 block w-full break-words">
                                               Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false}).replace(', ', ' - ')}hs)
                                             </span>
                                           )}
@@ -1721,7 +1757,7 @@ export default function AdminDashboard() {
                                       </div>
                                       
                                       {/* Right: State Selector and Actions */}
-                                      <div className="flex flex-wrap items-center gap-2 justify-between w-full mt-2 md:mt-0 md:w-auto md:justify-end md:gap-4">
+                                      <div className="flex flex-wrap items-center gap-4 justify-center w-full mt-3 md:mt-0 md:w-auto md:justify-end">
                                         <div className="relative inline-flex items-center">
                                           <select
                                             value={appt.estado}
@@ -1735,9 +1771,10 @@ export default function AdminDashboard() {
                                           </select>
                                           <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
                                         </div>
-                                        <div className="flex items-center gap-2 ml-auto">
+                                        <div className="flex items-center gap-2">
                                           <button 
                                             onClick={() => {
+                                              setSelectedTurnos([]);
                                               setEditingTurno(appt);
                                               setPacienteSearchQuery(appt.pacienteNombre || '');
                                               setShowEditTurnoModal(true);
@@ -1762,16 +1799,16 @@ export default function AdminDashboard() {
                               ) : (
                                 // Fast trigger add button
                                 <button 
-                                  onClick={() => {
-                                    setNewTurno({
-                                      ...newTurno,
-                                      fechaHora: currentDate,
-                                      hora: time,
-                                      ciudad: selectedCity
-                                    });
+                                    onClick={() => {
+                                      setNewTurno({
+                                        ...newTurno,
+                                        fechaHora: currentDate,
+                                        hora: time,
+                                        ciudad: getTargetCityForAppointment(currentDate, time)
+                                      });
                                     setShowNewTurnoModal(true);
                                   }}
-                                  className="w-full flex items-center justify-center border border-dashed border-slate-200 hover:border-slate-400 rounded-2xl p-2.5 text-xs font-bold text-slate-400 hover:text-slate-700 hover:bg-white transition"
+                                  className="col-span-1 sm:col-span-2 w-full flex items-center justify-center border border-dashed border-slate-700/60 hover:border-slate-500/60 rounded-2xl p-2.5 text-xs font-bold text-slate-500 hover:text-slate-300 hover:bg-slate-800/30 transition"
                                 >
                                   <Plus className="h-3.5 w-3.5 mr-1" />
                                   <span>Agendar {time}</span>
@@ -1788,15 +1825,23 @@ export default function AdminDashboard() {
             ) : (
               /* MONTH VIEW MODE */
               <div className="space-y-6">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-
-                  <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
-                    {new Date(
-                      parseInt(currentDate.split('-')[0], 10),
-                      parseInt(currentDate.split('-')[1], 10) - 1,
-                      1
-                    ).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
-                  </h2>
+                <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                  <div>
+                    <h2 className="text-xl font-extrabold mt-1 tracking-tight first-letter:capitalize">
+                      {new Date(
+                        parseInt(currentDate.split('-')[0], 10),
+                        parseInt(currentDate.split('-')[1], 10) - 1,
+                        1
+                      ).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                    </h2>
+                  </div>
+                  <button 
+                    onClick={() => setCurrentDate(getTodayFormatted())}
+                    className="px-4 py-2 w-fit bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold uppercase rounded-2xl border border-emerald-900/50 hover:border-emerald-500/50 transition shadow-sm tracking-wider"
+                    title="Ir a hoy"
+                  >
+                    Ir a hoy
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -1904,34 +1949,64 @@ export default function AdminDashboard() {
           )}
         </main>
 
+      {/* Floating Scroll Top & Refresh Buttons */}
+      {showScrollTop && (
+        <div className="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
+
+          <button
+            onClick={() => {
+              const scrollContainer = document.getElementById('main-scroll-container');
+              if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="p-3 bg-emerald-600 border border-emerald-500 text-white hover:bg-emerald-500 rounded-full shadow-xl shadow-emerald-900/40 transition"
+            title="Volver arriba"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
       {/* Floating Action Bar for Bulk Select */}
       {selectedTurnos.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center sm:space-x-4 gap-3 sm:gap-0">
-          <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
-            <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
-          </div>
-          <div className="hidden sm:block h-8 w-px bg-slate-700"></div>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button onClick={handleBulkDeleteTurnos} className="px-3 py-1.5 bg-rose-950/40 text-rose-400 border border-rose-500/30 rounded-xl hover:bg-rose-900/60 transition flex items-center justify-center" title="Eliminar Seleccionados">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all">
+          
+          {/* Info and Delete (Top on mobile, Left on desktop) */}
+          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
+                <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
+              </div>
+              <button onClick={() => setSelectedTurnos([])} className="text-xs font-bold text-slate-500 hover:text-slate-300 transition">
+                Cancelar
+              </button>
+            </div>
+            <button onClick={handleBulkDeleteTurnos} className="p-2 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0" title="Eliminar Seleccionados">
               <Trash2 className="h-4 w-4" />
             </button>
-            <div className="hidden sm:block h-6 w-px bg-slate-700/80 self-center mx-1"></div>
-            <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-slate-600/20 text-slate-400 border border-slate-500/30 rounded-xl text-xs font-bold hover:bg-slate-600/30 transition">
+          </div>
+          
+          {/* Divider (Horizontal on mobile, Vertical on desktop) */}
+          <div className="h-px w-full sm:h-8 sm:w-px bg-slate-700/50 sm:bg-slate-700 shrink-0"></div>
+          
+          {/* Status buttons (Grid on mobile, Row on desktop) */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+            <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
               Pendientes
             </button>
-            <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold hover:bg-emerald-600/30 transition">
+            <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
               Atendidos
             </button>
-            <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-bold hover:bg-blue-600/30 transition">
+            <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
               Confirmados
             </button>
-            <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-600/20 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold hover:bg-rose-600/30 transition">
+            <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
               Ausentes
             </button>
           </div>
-          <button onClick={() => setSelectedTurnos([])} className="absolute -top-3 -right-3 p-1.5 bg-slate-800 text-slate-400 hover:text-white rounded-full border border-slate-700 hover:bg-slate-700 transition shadow-lg">
-            <X className="h-4 w-4" />
-          </button>
         </div>
       )}
 
@@ -2895,3 +2970,4 @@ export default function AdminDashboard() {
     </>
   );
 }
+

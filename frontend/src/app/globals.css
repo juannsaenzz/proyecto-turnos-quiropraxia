@@ -63,10 +63,11 @@ body {
   }
 }
 
-/* Fix native browser date/time pickers on dark backgrounds */
+/* Fix native browser date/time pickers on dark backgrounds and padding overlap */
 input[type="date"],
 input[type="time"],
 input[type="datetime-local"] {
   color-scheme: dark;
+  padding-right: 12px !important;
 }
 

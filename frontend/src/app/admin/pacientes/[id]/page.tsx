@@ -19,7 +19,9 @@ import {
   X,
   Trash2,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  ArrowUp,
+  RefreshCw
 } from 'lucide-react';
 
 interface Turno {
@@ -57,7 +59,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       }
     };
     fetchUser();
-  }, [supabase]);
+  }, []);
 
   const pacienteId = parseInt(params.id, 10);
   
@@ -79,6 +81,25 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     cancelText?: string;
     type?: 'danger' | 'warning' | 'info';
   } | null>(null);
+
+  // Scroll to top FAB state
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container');
+    const target = scrollContainer || window;
+    
+    const handleScroll = () => {
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+      if (scrollTop > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    target.addEventListener('scroll', handleScroll);
+    return () => target.removeEventListener('scroll', handleScroll as EventListener);
+  }, []);
 
   // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
@@ -210,19 +231,29 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     );
   };
 
-  const updateSelectedEstado = async (estado: Turno['estado']) => {
+  const updateSelectedEstado = (estado: Turno['estado']) => {
     if (selectedTurnos.length === 0) return;
-    try {
-      await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
-      })));
-      setTurnos(prev => prev.map(t => selectedTurnos.includes(t.id) ? { ...t, estado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail || undefined } : t));
-      setSelectedTurnos([]);
-    } catch (error) {
-      console.error("Error bulk updating", error);
-    }
+    setCustomConfirm({
+      title: `Cambiar a ${estado}`,
+      message: `¿Estás seguro de que deseas marcar los ${selectedTurnos.length} turnos seleccionados como ${estado}?`,
+      confirmText: 'Guardar Cambios',
+      cancelText: 'Cancelar',
+      type: 'warning',
+      onConfirm: async () => {
+        try {
+          await Promise.all(selectedTurnos.map(id => fetch(`http://localhost:3000/turnos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
+          })));
+          setTurnos(prev => prev.map(t => selectedTurnos.includes(t.id) ? { ...t, estado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail || undefined } : t));
+          setSelectedTurnos([]);
+          setCustomConfirm(null);
+        } catch (error) {
+          console.error("Error bulk updating", error);
+        }
+      }
+    });
   };
 
   const deleteSelected = () => {
@@ -300,7 +331,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl"
+            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -371,7 +402,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               ) : (
                 <div className="space-y-4">
                   {turnos.map((turno) => (
-                    <div key={turno.id} className={`group bg-slate-900 border rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : 'border-slate-800 hover:border-slate-700 hover:shadow-md'}`}>
+                    <div key={turno.id} className={`group border rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md'}`}>
                       
                       {/* Left: Checkbox, Date & Time */}
                       <div className="flex items-center gap-5 md:w-1/3">
@@ -448,25 +479,69 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         )}
       </main>
 
-      {/* Floating Bulk Actions Bar */}
-      {selectedTurnos.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 p-2 rounded-2xl shadow-2xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5">
-          <div className="px-4 font-bold text-slate-200">
-            <span className="text-emerald-400">{selectedTurnos.length}</span> seleccionados
-          </div>
-          <div className="w-px h-8 bg-slate-700"></div>
-          <button 
-            onClick={deleteSelected}
-            className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-xl transition flex items-center justify-center border border-transparent hover:border-rose-500/30"
-            title="Eliminar seleccionados"
+      {/* Floating Scroll Top & Refresh Buttons */}
+      {showScrollTop && (
+        <div className="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <button
+            onClick={() => window.location.reload()}
+            className="p-3 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-xl shadow-black/50 transition group"
+            title="Actualizar datos"
           >
-            <Trash2 className="h-5 w-5" />
+            <RefreshCw className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
           </button>
-          <div className="flex gap-2 bg-slate-950 rounded-xl p-1 border border-slate-800">
-            <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-400 hover:bg-slate-800 transition">Pendientes</button>
-            <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-500 hover:bg-emerald-950/50 transition">Atendidos</button>
-            <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-blue-400 hover:bg-blue-950/50 transition">Confirmados</button>
-            <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-950/50 transition">Ausentes</button>
+          <button
+            onClick={() => {
+              const scrollContainer = document.getElementById('main-scroll-container');
+              if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }
+            }}
+            className="p-3 bg-emerald-600 border border-emerald-500 text-white hover:bg-emerald-500 rounded-full shadow-xl shadow-emerald-900/40 transition"
+            title="Volver arriba"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Floating Action Bar for Bulk Select */}
+      {selectedTurnos.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all">
+          
+          {/* Info and Delete (Top on mobile, Left on desktop) */}
+          <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="text-slate-200 font-bold text-sm whitespace-nowrap">
+                <span className="text-emerald-400 text-lg">{selectedTurnos.length}</span> seleccionados
+              </div>
+              <button onClick={() => setSelectedTurnos([])} className="text-xs font-bold text-slate-500 hover:text-slate-300 transition">
+                Cancelar
+              </button>
+            </div>
+            <button onClick={deleteSelected} className="p-2 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0" title="Eliminar Seleccionados">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          
+          {/* Divider (Horizontal on mobile, Vertical on desktop) */}
+          <div className="h-px w-full sm:h-8 sm:w-px bg-slate-700/50 sm:bg-slate-700 shrink-0"></div>
+          
+          {/* Status buttons (Grid on mobile, Row on desktop) */}
+          <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
+            <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
+              Pendientes
+            </button>
+            <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
+              Atendidos
+            </button>
+            <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
+              Confirmados
+            </button>
+            <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
+              Ausentes
+            </button>
           </div>
         </div>
       )}

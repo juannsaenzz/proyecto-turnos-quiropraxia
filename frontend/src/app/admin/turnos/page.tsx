@@ -1350,7 +1350,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Top Header */}
-      <header className="h-auto sm:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center mb-6 py-4 sm:py-0 gap-4 sm:gap-0">
+      <header className="h-auto sm:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center py-4 sm:py-0 gap-4 sm:gap-0">
         <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}

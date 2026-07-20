@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 
 export async function GET(request: Request) {
@@ -24,8 +25,8 @@ export async function GET(request: Request) {
       {
         cookies: {
           get(name: string) {
-            // We don't need to get cookies in the callback usually, but if needed:
-            return request.headers.get('cookie')?.match(new RegExp(`(^| )${name}=([^;]+)`))?.[2]
+            const cookieStore = cookies()
+            return cookieStore.get(name)?.value
           },
           set(name: string, value: string, options: CookieOptions) {
             response.cookies.set({ name, value, ...options })

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-      const redirectUrl = requestUrl.clone()
+      const redirectUrl = new URL(requestUrl.href)
       redirectUrl.pathname = next
       redirectUrl.search = `?t=${Date.now()}` // prevent caching
       return NextResponse.redirect(redirectUrl)
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   }
 
   // return the user to an error page with instructions
-  const errorUrl = requestUrl.clone()
+  const errorUrl = new URL(requestUrl.href)
   errorUrl.pathname = '/login'
   errorUrl.searchParams.set('error', 'true')
   return NextResponse.redirect(errorUrl)

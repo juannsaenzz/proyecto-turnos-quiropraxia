@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Quiropraxia - Reserva de Turnos',
-  description: 'Sistema moderno de reserva de turnos y gestión de pacientes para consultorios de quiropraxia.',
+  title: 'Centro Quiropráctico Nicolás',
+  description: 'Sistema de reserva de turnos para quiropraxia.',
 };
 
 export default function RootLayout({

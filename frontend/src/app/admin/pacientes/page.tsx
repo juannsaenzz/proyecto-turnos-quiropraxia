@@ -173,6 +173,11 @@ export default function AdminDashboard() {
   
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [visiblePacientesCount, setVisiblePacientesCount] = useState(10);
+
+  useEffect(() => {
+    setVisiblePacientesCount(10);
+  }, [searchQuery, sortOption]);
   
   // Sort state
   const [sortOption, setSortOption] = useState<'A-Z' | 'Z-A' | 'turnos-asc' | 'turnos-desc'>('A-Z');
@@ -1260,7 +1265,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-850 text-sm font-semibold text-slate-300">
-                    {sortedPacientes.map(p => (
+                    {sortedPacientes.slice(0, visiblePacientesCount).map(p => (
                       <tr key={p.id} className="hover:bg-slate-850/40 transition">
                         <td className="px-6 py-4">
                           <button

@@ -388,7 +388,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             {/* Turnos List */}
             <div>
               <h3 className="text-xl font-bold text-slate-200 mb-6">
-                Registro de Turnos
+                Historial de Turnos
               </h3>
               
               {turnos.length === 0 ? (

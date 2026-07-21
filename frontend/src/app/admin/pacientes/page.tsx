@@ -915,7 +915,7 @@ export default function AdminDashboard() {
   const handleDeletePaciente = (id: number, nombre: string) => {
     setCustomConfirm({
       title: "Eliminar Paciente",
-      message: `¿Estás seguro de que deseas eliminar al paciente "${nombre}"? Esta acción borrará de forma permanente todos sus turnos y su historial clínico.`,
+      message: `¿Estás seguro de que deseas eliminar al paciente "${nombre}"? Esta acción borrará de forma permanente todos sus turnos y su historial de turnos.`,
       confirmText: "Sí, eliminar",
       cancelText: "Cancelar",
       type: "danger",

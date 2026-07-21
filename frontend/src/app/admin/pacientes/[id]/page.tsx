@@ -348,7 +348,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             {/* Turnos List */}
             <div>
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm mb-6">
-                <span className="font-extrabold text-slate-100 text-sm sm:text-base">Historial de Turnos</span>
+                <span className="text-xl font-extrabold text-slate-100 tracking-tight">Historial de Turnos</span>
                 <div className="relative inline-flex items-center w-full sm:w-auto">
                   <select
                     value={sortOption}

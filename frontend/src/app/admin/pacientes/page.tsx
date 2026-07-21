@@ -1155,7 +1155,7 @@ export default function AdminDashboard() {
         ) : (
           <>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm">
-          <span className="font-extrabold text-slate-100 text-sm sm:text-base">Fichas de Pacientes</span>
+          <span className="text-xl font-extrabold text-slate-100 tracking-tight">Fichas de Pacientes</span>
           
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
             <div className="relative inline-flex items-center w-full sm:w-auto">

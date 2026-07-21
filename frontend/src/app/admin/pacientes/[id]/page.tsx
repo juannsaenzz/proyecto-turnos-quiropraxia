@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../../components/SidebarContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -352,9 +353,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
       <main className="flex-1 p-6 sm:p-8 max-w-5xl mx-auto w-full">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-          </div>
+          <LoadingSpinner />
         ) : !paciente ? (
           <div className="text-center py-20">
             <h2 className="text-2xl font-bold text-slate-400">Paciente no encontrado</h2>

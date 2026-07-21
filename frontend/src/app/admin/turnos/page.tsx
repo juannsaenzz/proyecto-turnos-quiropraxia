@@ -6,6 +6,7 @@ import logo from '@/assets/2.png';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../components/SidebarContext';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { 
   Calendar, 
   Users, 
@@ -500,6 +501,7 @@ export default function AdminDashboard() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [historiales, setHistoriales] = useState<Historial[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Load initial data from the database
   useEffect(() => {
@@ -560,6 +562,8 @@ export default function AdminDashboard() {
         }
       } catch (error) {
         console.error('Error fetching database records:', error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
@@ -1438,9 +1442,12 @@ export default function AdminDashboard() {
 
         {/* Dashboard Main Content */}
         <main className="flex-grow p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
-          
-          {/* Sucursal de Hoy - Controls bar */}
-          {activeTab === 'turnos' && calendarViewMode === 'day' && (
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              {/* Sucursal de Hoy - Controls bar */}
+              {activeTab === 'turnos' && calendarViewMode === 'day' && (
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm">
             <div className="flex flex-wrap items-center gap-5">
               {/* Date selection & offsets */}
@@ -1982,6 +1989,8 @@ export default function AdminDashboard() {
             )}
             </>
           )}
+            </>
+          )}
         </main>
 
       {/* Floating Scroll Top & Refresh Buttons */}
@@ -2321,7 +2330,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
@@ -2367,7 +2376,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
                   <div className="relative">
@@ -2572,7 +2581,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Fecha</label>
                   <input 
@@ -2618,7 +2627,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs text-slate-500 font-bold block uppercase">Ciudad / Sucursal</label>
                   <div className="relative">
@@ -2734,7 +2743,7 @@ export default function AdminDashboard() {
 
               {showOptionalFields && (
                 <div className="space-y-4 border-t border-slate-800 pt-4 transition-all duration-300">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs text-slate-400 font-bold block uppercase">DNI</label>
                       <input 
@@ -2763,7 +2772,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs text-slate-400 font-bold block uppercase">Correo</label>
                       <input 
@@ -2849,7 +2858,7 @@ export default function AdminDashboard() {
               </div>
 
               <div className="space-y-4 border-t border-slate-800 pt-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-450 font-bold block uppercase">DNI</label>
                     <input 
@@ -2878,7 +2887,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs text-slate-450 font-bold block uppercase">Correo</label>
                     <input 

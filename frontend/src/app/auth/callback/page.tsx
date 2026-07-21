@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { RefreshCw } from 'lucide-react';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -29,8 +30,9 @@ function AuthCallbackContent() {
   }, [router, supabase]);
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4">
-      <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
+      <RefreshCw className="h-12 w-12 animate-spin text-emerald-500 mb-8" />
+      <div className="text-center"></div>
     </div>
   );
 }
@@ -38,8 +40,8 @@ function AuthCallbackContent() {
 export default function AuthCallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex justify-center items-center">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <RefreshCw className="h-12 w-12 animate-spin text-emerald-500" />
       </div>
     }>
       <AuthCallbackContent />

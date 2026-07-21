@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/utils/supabase/client';
-import { ShieldCheck, LogIn, AlertCircle } from 'lucide-react';
+import { ShieldCheck, LogIn, AlertCircle, RefreshCw } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import logo from '@/assets/1.png';
@@ -79,8 +79,8 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex justify-center items-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <RefreshCw className="h-10 w-10 animate-spin text-emerald-500" />
       </div>
     }>
       <LoginContent />

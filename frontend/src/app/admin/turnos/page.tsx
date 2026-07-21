@@ -198,6 +198,8 @@ export default function AdminDashboard() {
   const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
   const [editingPaciente, setEditingPaciente] = useState<Paciente | null>(null);
   const [showEditTurnoModal, setShowEditTurnoModal] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [editingTurno, setEditingTurno] = useState<Turno | null>(null);
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;

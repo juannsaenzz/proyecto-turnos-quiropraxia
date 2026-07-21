@@ -179,6 +179,7 @@ export default function AdminDashboard() {
   
   // Feedback Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New Clinical History workflow states
   const [selectedHistorialDate, setSelectedHistorialDate] = useState<string | null>(null);
@@ -1317,7 +1318,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTurno} className="p-6 space-y-4">
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleCreateTurno(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4">
               <div className="space-y-1.5 relative">
                 {showPacienteDropdown && (
                   <div 
@@ -1539,7 +1540,9 @@ export default function AdminDashboard() {
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewTurnoModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
-                <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">Agendar</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Agendar'}
+                </button>
               </div>
             </form>
           </div>
@@ -1563,7 +1566,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdateTurnoSubmit} className="p-6 space-y-4">
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleUpdateTurnoSubmit(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4">
               <div className="space-y-1.5 relative">
                 {showPacienteDropdown && (
                   <div 
@@ -1794,8 +1797,9 @@ export default function AdminDashboard() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">
-                  Guardar Cambios
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Guardar Cambios
+                '}
                 </button>
               </div>
             </form>
@@ -1820,7 +1824,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleCreatePaciente} className="p-6 space-y-4" noValidate>
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleCreatePaciente(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4" noValidate>
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-500 font-bold flex items-center gap-1 uppercase">
                   Nombre Completo <span className="text-rose-500 font-black text-sm">*</span>
@@ -1923,8 +1927,9 @@ export default function AdminDashboard() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">
-                  Registrar Paciente
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Registrar Paciente
+                '}
                 </button>
               </div>
             </form>
@@ -1948,7 +1953,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleUpdatePaciente} className="p-6 space-y-4" noValidate>
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleUpdatePaciente(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4" noValidate>
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-500 font-bold flex items-center gap-1 uppercase">
                   Nombre Completo <span className="text-rose-500 font-black text-sm">*</span>
@@ -2037,8 +2042,9 @@ export default function AdminDashboard() {
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">
-                  Guardar Cambios
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Guardar Cambios
+                '}
                 </button>
               </div>
             </form>
@@ -2056,7 +2062,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateHistorial} className="p-6 space-y-4">
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleCreateHistorial(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-550 font-bold block uppercase">Paciente</label>
                 <select 
@@ -2097,7 +2103,9 @@ export default function AdminDashboard() {
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewHistorialModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
-                <button type="submit" className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition">Registrar</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Registrar'}
+                </button>
               </div>
             </form>
           </div>

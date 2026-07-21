@@ -1722,7 +1722,7 @@ export default function AdminDashboard() {
                             {/* Current Time Line */}
                             {showTimeline && (
                               <div 
-                                className="absolute left-0 right-0 z-40 pointer-events-none" 
+                                className="absolute left-0 right-0 z-20 pointer-events-none" 
                                 style={{ top: `${timelinePercentage}%` }}
                               >
                                 <div className="absolute left-0 right-0 h-[2px] bg-emerald-600 -translate-y-1/2"></div>

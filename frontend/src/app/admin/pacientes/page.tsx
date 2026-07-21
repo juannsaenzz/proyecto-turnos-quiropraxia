@@ -175,12 +175,12 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [visiblePacientesCount, setVisiblePacientesCount] = useState(10);
 
+  // Sort state
+  const [sortOption, setSortOption] = useState<'A-Z' | 'Z-A' | 'turnos-asc' | 'turnos-desc'>('A-Z');
+
   useEffect(() => {
     setVisiblePacientesCount(10);
   }, [searchQuery, sortOption]);
-  
-  // Sort state
-  const [sortOption, setSortOption] = useState<'A-Z' | 'Z-A' | 'turnos-asc' | 'turnos-desc'>('A-Z');
   
   // Feedback Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);

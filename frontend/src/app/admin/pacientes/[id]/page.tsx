@@ -59,6 +59,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const [editEstado, setEditEstado] = useState<Turno['estado']>('PENDIENTE');
   const [isSaving, setIsSaving] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const [sortOption, setSortOption] = useState<'desc' | 'asc'>('desc');
 
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;
@@ -329,7 +330,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                   <User className="h-10 w-10 text-emerald-500" />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black text-slate-100 tracking-tight break-words break-all">{paciente.nombre}</h2>
+                  <h2 className="text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-slate-400">
                     {paciente.telefono && <div className="flex items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500" /> {paciente.telefono}</div>}
                     {paciente.dni && <div className="flex items-center">DNI: {paciente.dni}</div>}
@@ -346,9 +347,20 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
             {/* Turnos List */}
             <div>
-              <h3 className="text-xl font-bold text-slate-200 mb-6">
-                Historial de Turnos
-              </h3>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm mb-6">
+                <span className="font-extrabold text-slate-100 text-sm sm:text-base">Historial de Turnos</span>
+                <div className="relative inline-flex items-center w-full sm:w-auto">
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as any)}
+                    className="w-full sm:w-auto appearance-none bg-slate-950 border border-slate-800 text-slate-300 text-sm font-semibold rounded-xl px-4 py-2 pr-10 focus:outline-none focus:border-emerald-500 transition cursor-pointer hover:bg-slate-900"
+                  >
+                    <option value="desc">Más recientes primero</option>
+                    <option value="asc">Más antiguos primero</option>
+                  </select>
+                  <ChevronDown className="absolute right-3 h-4 w-4 text-slate-500 pointer-events-none" />
+                </div>
+              </div>
               
               {turnos.length === 0 ? (
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center shadow-lg">
@@ -358,7 +370,11 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {turnos.map((turno) => (
+                  {[...turnos].sort((a, b) => {
+                    const dateA = new Date(a.fechaHora).getTime();
+                    const dateB = new Date(b.fechaHora).getTime();
+                    return sortOption === 'desc' ? dateB - dateA : dateA - dateB;
+                  }).map((turno) => (
                     <div key={turno.id} className={`group border rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md'}`}>
                       
                       {/* Left: Checkbox, Date & Time */}
@@ -404,7 +420,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                           </div>
 
                           {/* Right: Status and Delete */}
-                          <div className="md:w-1/4 flex justify-end items-center gap-2">
+                          <div className="md:w-1/4 flex justify-center md:justify-end items-center gap-2 mt-4 md:mt-0">
                             <div className="relative inline-flex items-center">
                               <select
                                 value={turno.estado}

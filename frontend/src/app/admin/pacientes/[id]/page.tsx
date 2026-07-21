@@ -73,6 +73,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const [editNotas, setEditNotas] = useState("");
   const [editEstado, setEditEstado] = useState<Turno['estado']>('PENDIENTE');
   const [isSaving, setIsSaving] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
 
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;
@@ -450,14 +451,19 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                               <select
                                 value={turno.estado}
                                 onChange={(e) => handleQuickStatusChange(turno.id, e.target.value as Turno['estado'])}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-8 ${getEstadoStyles(turno.estado)}`}
+                                disabled={updatingStatusId === turno.id}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-8 disabled:opacity-50 disabled:cursor-not-allowed ${getEstadoStyles(turno.estado)}`}
                               >
                                 <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
                                 <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>
                                 <option value="ATENDIDO" className="text-slate-800 bg-white">ATENDIDO</option>
                                 <option value="AUSENTE" className="text-slate-800 bg-white">AUSENTE</option>
                               </select>
-                              <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
+                              {updatingStatusId === turno.id ? (
+                                <RefreshCw className="absolute right-2 h-3 w-3 pointer-events-none animate-spin text-slate-500" />
+                              ) : (
+                                <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
+                              )}
                             </div>
                             <button
                               onClick={() => handleDeleteSingleTurno(turno.id)}
@@ -642,6 +648,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             </div>
           </div>
         </div>
+      )}
+
+      {updatingStatusId !== null && (
+        <LoadingSpinner message="Actualizando estado..." />
       )}
     </div>
   );

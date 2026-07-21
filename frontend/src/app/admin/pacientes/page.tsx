@@ -1311,6 +1311,16 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+              {visiblePacientesCount < sortedPacientes.length && (
+                <div className="p-4 border-t border-slate-800 flex justify-center bg-slate-900/50">
+                  <button 
+                    onClick={() => setVisiblePacientesCount(prev => prev + 10)}
+                    className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-bold rounded-xl transition border border-slate-700 shadow-sm"
+                  >
+                    Ver más pacientes ({sortedPacientes.length - visiblePacientesCount} ocultos)
+                  </button>
+                </div>
+              )}
             </div>
 
           {/* TAB 3: HISTORIAL CLINICO */}

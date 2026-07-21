@@ -1163,7 +1163,9 @@ export default function AdminDashboard() {
 
   const updateTurnoEstado = async (id: number, nuevoEstado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     setSelectedTurnos([]);
+    setUpdatingStatusId(id);
     try {
+      await new Promise(resolve => setTimeout(resolve, 500));
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: "PUT",
         headers: {
@@ -1185,6 +1187,8 @@ export default function AdminDashboard() {
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'No se pudo actualizar el estado del turno.');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -3018,7 +3022,10 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {(updatingStatusId !== null || isBulkUpdating) && (
+        <LoadingSpinner message="Actualizando estado..." />
+      )}
     </>
   );
 }
-

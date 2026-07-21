@@ -177,7 +177,9 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   };
 
   const handleQuickStatusChange = async (id: number, newEstado: Turno['estado']) => {
+    setUpdatingStatusId(id);
     try {
+      await new Promise(resolve => setTimeout(resolve, 500));
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
@@ -196,6 +198,8 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       }
     } catch (error) {
       console.error("Error updating turno status", error);
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 

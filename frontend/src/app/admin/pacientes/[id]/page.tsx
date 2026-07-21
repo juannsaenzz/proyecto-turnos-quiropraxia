@@ -485,7 +485,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       )}
 
       {/* Floating Action Bar for Bulk Select */}
-      {selectedTurnos.length > 0 && (
+      {selectedTurnos.length > 0 && editingTurno === null && customConfirm === null && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[90] bg-slate-900 border border-slate-700 shadow-2xl shadow-emerald-900/20 rounded-2xl flex flex-col w-[calc(100vw-2rem)] sm:w-max max-w-xl sm:max-w-none transition-all overflow-hidden">
           
           {/* Header */}

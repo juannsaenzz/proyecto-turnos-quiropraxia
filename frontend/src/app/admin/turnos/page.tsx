@@ -202,7 +202,7 @@ export default function AdminDashboard() {
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;
     message: string;
-    onConfirm: () => void;
+    onConfirm: () => void | Promise<void>;
     confirmText?: string;
     cancelText?: string;
     type?: "danger" | 'warning' | 'info';
@@ -213,6 +213,7 @@ export default function AdminDashboard() {
   
   // Feedback Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Current time for the timeline indicator
@@ -2987,16 +2988,21 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
               <button 
                 type="button" 
-                onClick={() => setCustomConfirm(null)} 
+                disabled={isConfirming} onClick={() => setCustomConfirm(null)} 
                 className="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-slate-200 bg-slate-950 border border-slate-800/80 rounded-xl hover:bg-slate-800 transition"
               >
                 {customConfirm.cancelText || 'Cancelar'}
               </button>
               <button 
                 type="button" 
-                onClick={() => {
-                  customConfirm.onConfirm();
-                  setCustomConfirm(null);
+                disabled={isConfirming} onClick={async () => {
+                  setIsConfirming(true);
+                  try {
+                    await customConfirm.onConfirm();
+                  } finally {
+                    setIsConfirming(false);
+                    setCustomConfirm(null);
+                  }
                 }} 
                 className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl transition shadow-sm ${
                   customConfirm.type === 'danger' 
@@ -3004,7 +3010,7 @@ export default function AdminDashboard() {
                     : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/20"
                 }`}
               >
-                {customConfirm.confirmText || 'Confirmar'}
+                {isConfirming ? <div className="flex items-center gap-2"><RefreshCw className="h-4 w-4 animate-spin" /> Procesando...</div> : (customConfirm.confirmText || 'Confirmar')}
               </button>
             </div>
           </div>

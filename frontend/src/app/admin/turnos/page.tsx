@@ -52,7 +52,7 @@ interface Turno {
   hora: string; // HH:MM
   ciudad: string;
   notas: string;
-  estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
+  estado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
   updatedAt?: string;
   updatedBy?: string;
 }
@@ -205,7 +205,7 @@ export default function AdminDashboard() {
     onConfirm: () => void;
     confirmText?: string;
     cancelText?: string;
-    type?: 'danger' | 'warning' | 'info';
+    type?: "danger" | 'warning' | 'info';
   } | null>(null);
   
   // Search state
@@ -294,22 +294,22 @@ export default function AdminDashboard() {
       case 1: // Lunes
       case 3: // Miércoles
       case 4: // Jueves
-        return { ciudad: 'Rosario del Tala', turno: 'Tarde' as const };
+        return { ciudad: "Rosario del Tala", turno: "Tarde" as const };
       case 2: // Martes
-        return { ciudad: 'Maciá', turno: 'Tarde' as const };
+        return { ciudad: "Maciá", turno: "Tarde" as const };
       case 5: // Viernes
         // Default Gualeguay (Mañana) if hour < 15:00, Galarza (Tarde) if hour >= 15:00
         if (hourStr) {
           const hr = parseInt(hourStr.split(':')[0], 10);
           if (hr < 15) {
-            return { ciudad: 'Gualeguay', turno: 'Mañana' as const };
+            return { ciudad: "Gualeguay", turno: "Mañana" as const };
           } else {
-            return { ciudad: 'Galarza', turno: 'Tarde' as const };
+            return { ciudad: "Galarza", turno: "Tarde" as const };
           }
         }
-        return { ciudad: 'Gualeguay', turno: 'Mañana' as const };
+        return { ciudad: "Gualeguay", turno: "Mañana" as const };
       default: // Saturday / Sunday
-        return { ciudad: 'Cerrado', turno: 'Ninguno' as const };
+        return { ciudad: "Cerrado", turno: "Ninguno" as const };
     }
   };
 
@@ -329,14 +329,14 @@ export default function AdminDashboard() {
     
     // Legacy config applies to whatever block it specifies, unless overridden
     if (dataLegacy && dataLegacy.ciudad && dataLegacy.bloque) {
-      const mappedShift = dataLegacy.bloque === 'MANANA' ? 'Mañana' : 'Tarde';
+      const mappedShift = dataLegacy.bloque === 'MANANA' ? 'Mañana' : "Tarde";
       newConfigs[mappedShift] = { ciudad: dataLegacy.ciudad, bloque: mappedShift };
     }
     if (dataManana && dataManana.ciudad) {
-      newConfigs['Mañana'] = { ciudad: dataManana.ciudad, bloque: 'Mañana' };
+      newConfigs['Mañana'] = { ciudad: dataManana.ciudad, bloque: "Mañana" };
     }
     if (dataTarde && dataTarde.ciudad) {
-      newConfigs['Tarde'] = { ciudad: dataTarde.ciudad, bloque: 'Tarde' };
+      newConfigs['Tarde'] = { ciudad: dataTarde.ciudad, bloque: "Tarde" };
     }
 
     setSavedConfigs(newConfigs);
@@ -361,20 +361,20 @@ export default function AdminDashboard() {
     return selectedCity !== defaults.ciudad || selectedShift !== defaults.turno;
   };
 
-  const handleSaveConfig = async (city = selectedCity, shift: 'Mañana' | 'Tarde' | 'Ninguno' | 'Ambos turnos' = selectedShift) => {
+  const handleSaveConfig = async (city = selectedCity, shift: "Mañana" | 'Tarde' | 'Ninguno' | 'Ambos turnos' = selectedShift) => {
     const shiftsToSave = shift === 'Ambos turnos' || shift === 'Ninguno' ? ['Mañana', 'Tarde'] : [shift];
 
     try {
       for (const s of shiftsToSave) {
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': "application/json",
           },
           body: JSON.stringify({
-            fecha: `${currentDate}_${s === 'Mañana' ? 'MANANA' : 'TARDE'}`,
+            fecha: `${currentDate}_${s === 'Mañana' ? 'MANANA' : "TARDE"}`,
             ciudad: city,
-            bloque: s === 'Mañana' ? 'MANANA' : 'TARDE',
+            bloque: s === 'Mañana' ? 'MANANA' : "TARDE",
           }),
         });
 
@@ -387,9 +387,9 @@ export default function AdminDashboard() {
           [s]: { ciudad: city, bloque: s }
         }));
         setAllConfigs(prev => {
-          const fetchStr = `${currentDate}_${s === 'Mañana' ? 'MANANA' : 'TARDE'}`;
+          const fetchStr = `${currentDate}_${s === 'Mañana' ? 'MANANA' : "TARDE"}`;
           const filtered = prev.filter(c => c.fecha !== fetchStr);
-          return [...filtered, { fecha: fetchStr, ciudad: city, bloque: s === 'Mañana' ? 'MANANA' : 'TARDE' }];
+          return [...filtered, { fecha: fetchStr, ciudad: city, bloque: s === 'Mañana' ? 'MANANA' : "TARDE" }];
         });
       }
       const shiftMsg = shift === 'Ambos turnos' || shift === 'Ninguno' ? 'ambos turnos' : `el turno ${shift.toLowerCase()}`;
@@ -403,8 +403,8 @@ export default function AdminDashboard() {
   const handleSaveHistorialNote = async (pacienteId: number, fechaStr: string, notas: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { 'Content-Type': "application/json" },
         body: JSON.stringify({
           pacienteId,
           fecha: fechaStr,
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
       parseInt(dateParts[1], 10) - 1,
       parseInt(dateParts[2], 10)
     );
-    return date.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('es-ES', { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   };
 
   // Data lists from database
@@ -540,22 +540,22 @@ export default function AdminDashboard() {
 
   // Form states
   const [newTurno, setNewTurno] = useState({
-    pacienteId: '',
+    pacienteId: "",
     fechaHora: getTodayFormatted(),
-    hora: '15:00',
-    ciudad: 'Maciá',
-    notas: '',
-    estado: 'PENDIENTE' as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE'
+    hora: "15:00",
+    ciudad: "Maciá",
+    notas: "",
+    estado: "PENDIENTE" as 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE'
   });
 
   const [newPaciente, setNewPaciente] = useState({ 
-    nombre: '', 
-    dni: '', 
-    email: '', 
-    telefono: '', 
-    fechaNacimiento: '' 
+    nombre: "", 
+    dni: "", 
+    email: "", 
+    telefono: "", 
+    fechaNacimiento: "" 
   });
-  const [newHistorial, setNewHistorial] = useState({ pacienteId: '', fecha: getTodayFormatted(), notas: '' });
+  const [newHistorial, setNewHistorial] = useState({ pacienteId: "", fecha: getTodayFormatted(), notas: "" });
 
   // 15-Minute Grid generation based on shift, dynamically expanding for out-of-range appointments
   const get15MinTimeSlots = () => {
@@ -626,9 +626,9 @@ export default function AdminDashboard() {
   const executeCreateTurno = async (p: Paciente, isoDateTime: string, timeLabel: string) => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           pacienteId: p.id,
@@ -666,12 +666,12 @@ export default function AdminDashboard() {
 
       // Reset
       setNewTurno({
-        pacienteId: '',
+        pacienteId: "",
         fechaHora: currentDate,
-        hora: '15:00',
+        hora: "15:00",
         ciudad: selectedCity,
-        notas: '',
-        estado: 'PENDIENTE'
+        notas: "",
+        estado: "PENDIENTE"
       });
     } catch (err: any) {
       console.error(err);
@@ -694,12 +694,12 @@ export default function AdminDashboard() {
     );
 
     const newTurnoHr = parseInt(newTurno.hora.split(':')[0], 10);
-    const newTurnoShift = newTurnoHr < 15 ? 'Mañana' : 'Tarde';
+    const newTurnoShift = newTurnoHr < 15 ? 'Mañana' : "Tarde";
     
     const duplicatedPacienteTurnos = turnos.filter(t => {
       if (t.pacienteId === p.id && t.fechaHora === newTurno.fechaHora) {
         const tHr = parseInt(t.hora.split(':')[0], 10);
-        const tShift = tHr < 15 ? 'Mañana' : 'Tarde';
+        const tShift = tHr < 15 ? 'Mañana' : "Tarde";
         return tShift === newTurnoShift;
       }
       return false;
@@ -727,10 +727,10 @@ export default function AdminDashboard() {
       }
       
       setCustomConfirm({
-        title: 'Conflicto de Turno',
+        title: "Conflicto de Turno",
         message: `${messages.join(' ')} ¿Estás seguro de agendar este turno?`,
-        confirmText: 'Sí, agendar',
-        cancelText: 'Cancelar',
+        confirmText: "Sí, agendar",
+        cancelText: "Cancelar",
         onConfirm: () => executeCreateTurno(p, isoDateTime, newTurno.hora)
       });
       return;
@@ -743,9 +743,9 @@ export default function AdminDashboard() {
     const isoDateTime = `${updated.fechaHora}T${updated.hora}:00.000Z`;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${updated.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           pacienteId: updated.pacienteId,
@@ -803,12 +803,12 @@ export default function AdminDashboard() {
     );
 
     const editTurnoHr = parseInt(editingTurno.hora.split(':')[0], 10);
-    const editTurnoShift = editTurnoHr < 15 ? 'Mañana' : 'Tarde';
+    const editTurnoShift = editTurnoHr < 15 ? 'Mañana' : "Tarde";
     
     const duplicatedPacienteTurnos = turnos.filter(t => {
       if (t.id !== editingTurno.id && t.pacienteId === p.id && t.fechaHora === editingTurno.fechaHora) {
         const tHr = parseInt(t.hora.split(':')[0], 10);
-        const tShift = tHr < 15 ? 'Mañana' : 'Tarde';
+        const tShift = tHr < 15 ? 'Mañana' : "Tarde";
         return tShift === editTurnoShift;
       }
       return false;
@@ -833,10 +833,10 @@ export default function AdminDashboard() {
       }
       
       setCustomConfirm({
-        title: 'Conflicto de Turno',
+        title: "Conflicto de Turno",
         message: `${messages.join(' ')} ¿Estás seguro de mover el turno a este horario?`,
-        confirmText: 'Sí, guardar',
-        cancelText: 'Cancelar',
+        confirmText: "Sí, guardar",
+        cancelText: "Cancelar",
         onConfirm: () => executeUpdateTurno(updatedWithResolvedName)
       });
       return;
@@ -849,9 +849,9 @@ export default function AdminDashboard() {
     if (!name || !name.trim()) return;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           nombre: name.trim()
@@ -879,9 +879,9 @@ export default function AdminDashboard() {
     if (!name || !name.trim()) return;
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           nombre: name.trim()
@@ -915,7 +915,7 @@ export default function AdminDashboard() {
       errors.nombre = "El nombre completo es obligatorio.";
     }
 
-    const dniTrimmed = newPaciente.dni ? newPaciente.dni.trim() : '';
+    const dniTrimmed = newPaciente.dni ? newPaciente.dni.trim() : "";
     if (dniTrimmed) {
       if (!/^\d{7,8}$/.test(dniTrimmed)) {
         errors.dni = "El DNI debe tener 7 u 8 números.";
@@ -936,9 +936,9 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           nombre: newPaciente.nombre.trim(),
@@ -971,11 +971,11 @@ export default function AdminDashboard() {
       }
       
       setNewPaciente({
-        nombre: '',
-        dni: '',
-        email: '',
-        telefono: '',
-        fechaNacimiento: ''
+        nombre: "",
+        dni: "",
+        email: "",
+        telefono: "",
+        fechaNacimiento: ""
       });
     } catch (error: any) {
       console.error('Error creating paciente:', error);
@@ -993,7 +993,7 @@ export default function AdminDashboard() {
       errors.nombre = "El nombre completo es obligatorio.";
     }
 
-    const dniTrimmed = editingPaciente.dni ? editingPaciente.dni.trim() : '';
+    const dniTrimmed = editingPaciente.dni ? editingPaciente.dni.trim() : "";
     if (dniTrimmed) {
       if (!/^\d{7,8}$/.test(dniTrimmed)) {
         errors.dni = "El DNI debe tener 7 u 8 números.";
@@ -1014,9 +1014,9 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           nombre: editingPaciente.nombre.trim(),
@@ -1049,15 +1049,15 @@ export default function AdminDashboard() {
 
   const handleDeletePaciente = (id: number, nombre: string) => {
     setCustomConfirm({
-      title: 'Eliminar Paciente',
+      title: "Eliminar Paciente",
       message: `¿Estás seguro de que deseas eliminar al paciente "${nombre}"? Esta acción borrará de forma permanente todos sus turnos y su historial clínico.`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      type: 'danger',
+      confirmText: "Sí, eliminar",
+      cancelText: "Cancelar",
+      type: "danger",
       onConfirm: async () => {
         try {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${id}`, {
-            method: 'DELETE',
+            method: "DELETE",
           });
 
           if (!response.ok) {
@@ -1081,17 +1081,17 @@ export default function AdminDashboard() {
   const handleDeleteTurno = (id: number) => {
     setSelectedTurnos([]);
     const appt = turnos.find(t => t.id === id);
-    const details = appt ? ` de las ${appt.hora} hs para ${appt.pacienteNombre}` : '';
+    const details = appt ? ` de las ${appt.hora} hs para ${appt.pacienteNombre}` : "";
     setCustomConfirm({
-      title: 'Eliminar Turno',
+      title: "Eliminar Turno",
       message: `¿Estás seguro de que deseas eliminar el turno${details}? Esta acción no se puede deshacer.`,
-      confirmText: 'Sí, eliminar',
-      cancelText: 'Cancelar',
-      type: 'danger',
+      confirmText: "Sí, eliminar",
+      cancelText: "Cancelar",
+      type: "danger",
       onConfirm: async () => {
         try {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
-            method: 'DELETE',
+            method: "DELETE",
           });
 
           if (!response.ok) {
@@ -1121,9 +1121,9 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({
           pacienteId: p.id,
@@ -1151,20 +1151,20 @@ export default function AdminDashboard() {
       setShowNewHistorialModal(false);
       showToast(`Nueva ficha clínica agregada para ${p.nombre}`);
 
-      setNewHistorial({ pacienteId: '', fecha: currentDate, notas: '' });
+      setNewHistorial({ pacienteId: "", fecha: currentDate, notas: "" });
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'No se pudo crear la ficha clínica.');
     }
   };
 
-  const updateTurnoEstado = async (id: number, nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+  const updateTurnoEstado = async (id: number, nuevoEstado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     setSelectedTurnos([]);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': "application/json",
         },
         body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
       });
@@ -1191,19 +1191,19 @@ export default function AdminDashboard() {
     );
   };
 
-  const handleBulkUpdateEstado = (nuevoEstado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+  const handleBulkUpdateEstado = (nuevoEstado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     setCustomConfirm({
       title: `Cambiar a ${nuevoEstado}`,
       message: `¿Estás seguro de que deseas marcar los ${selectedTurnos.length} turnos seleccionados como ${nuevoEstado}?`,
-      confirmText: 'Guardar Cambios',
-      cancelText: 'Cancelar',
-      type: 'warning',
+      confirmText: "Guardar Cambios",
+      cancelText: "Cancelar",
+      type: "warning",
       onConfirm: async () => {
         try {
           await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
-            method: 'PUT',
+            method: "PUT",
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': "application/json",
             },
             body: JSON.stringify({ estado: nuevoEstado, updatedBy: currentUserEmail || undefined }),
           })));
@@ -1223,15 +1223,15 @@ export default function AdminDashboard() {
 
   const handleBulkDeleteTurnos = () => {
     setCustomConfirm({
-      title: 'Eliminar Turnos Seleccionados',
+      title: "Eliminar Turnos Seleccionados",
       message: `¿Estás seguro de que deseas eliminar los ${selectedTurnos.length} turnos seleccionados? Esta acción no se puede deshacer.`,
-      confirmText: 'Sí, eliminar todos',
-      cancelText: 'Cancelar',
-      type: 'danger',
+      confirmText: "Sí, eliminar todos",
+      cancelText: "Cancelar",
+      type: "danger",
       onConfirm: async () => {
         try {
           await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
-            method: 'DELETE',
+            method: "DELETE",
           })));
           
           setTurnos(prevTurnos => prevTurnos.filter(t => !selectedTurnos.includes(t.id)));
@@ -1245,32 +1245,32 @@ export default function AdminDashboard() {
     });
   };
 
-  const getEstadoStyles = (estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
+  const getEstadoStyles = (estado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE') => {
     switch (estado) {
       case 'PENDIENTE':
         return {
-          card: 'bg-slate-900 border-2 border-amber-500/40 hover:border-amber-500/70',
-          badge: 'bg-amber-950/50 border-amber-500/20 text-amber-300'
+          card: "bg-slate-900 border-2 border-amber-500/40 hover:border-amber-500/70",
+          badge: "bg-amber-950/50 border-amber-500/20 text-amber-300"
         };
       case 'CONFIRMADO':
         return {
-          card: 'bg-slate-900 border-2 border-blue-500/40 hover:border-blue-500/70',
-          badge: 'bg-blue-950/50 border-blue-500/20 text-blue-300'
+          card: "bg-slate-900 border-2 border-blue-500/40 hover:border-blue-500/70",
+          badge: "bg-blue-950/50 border-blue-500/20 text-blue-300"
         };
       case 'ATENDIDO':
         return {
-          card: 'bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500/70',
-          badge: 'bg-emerald-950/50 border-emerald-500/20 text-emerald-300'
+          card: "bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500/70",
+          badge: "bg-emerald-950/50 border-emerald-500/20 text-emerald-300"
         };
       case 'AUSENTE':
         return {
-          card: 'bg-slate-900 border-2 border-rose-500/40 hover:border-rose-500/70',
-          badge: 'bg-rose-950/50 border-rose-500/20 text-rose-300'
+          card: "bg-slate-900 border-2 border-rose-500/40 hover:border-rose-500/70",
+          badge: "bg-rose-950/50 border-rose-500/20 text-rose-300"
         };
       default:
         return {
-          card: 'bg-slate-900 border-2 border-slate-800 hover:border-slate-700',
-          badge: 'bg-slate-950 border-slate-800 text-slate-400'
+          card: "bg-slate-900 border-2 border-slate-800 hover:border-slate-700",
+          badge: "bg-slate-950 border-slate-800 text-slate-400"
         };
     }
   };
@@ -1299,9 +1299,9 @@ export default function AdminDashboard() {
   );
 
   const menuItems = [
-    { id: 'turnos', label: 'Calendario de Turnos', icon: Calendar },
-    { id: 'pacientes', label: 'Pacientes', icon: Users },
-    { id: 'historial', label: 'Historial Clínico', icon: FileText },
+    { id: "turnos", label: "Calendario de Turnos", icon: Calendar },
+    { id: "pacientes", label: "Pacientes", icon: Users },
+    { id: "historial", label: "Historial Clínico", icon: FileText },
   ] as const;
 
   if (!isMounted) return null;
@@ -1458,7 +1458,7 @@ export default function AdminDashboard() {
                       onClick={() => {
                         setTempCity(selectedCity);
                         setIsEditingConfig(true);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
                       title="Modificar Configuración"
@@ -1477,12 +1477,12 @@ export default function AdminDashboard() {
                   <button 
                     onClick={() => {
                       if (selectedCity === 'Cerrado') return;
-                      const defaultHour = selectedShift === 'Mañana' ? '09:00' : '15:00';
+                      const defaultHour = selectedShift === 'Mañana' ? '09:00' : "15:00";
                       setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                       setShowNewTurnoModal(true);
                     }}
                     disabled={selectedCity === 'Cerrado'}
-                    className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+                    className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : "bg-emerald-600 hover:bg-emerald-500"}`}
                   >
                     <Plus className="h-4.5 w-4.5" />
                     <span>Nuevo Turno</span>
@@ -1522,7 +1522,7 @@ export default function AdminDashboard() {
                     parseInt(currentDate.split('-')[0], 10),
                     parseInt(currentDate.split('-')[1], 10) - 1,
                     1
-                  ).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                  ).toLocaleDateString('es-ES', { month: "long", year: "numeric" })}
                 </span>
 
                 <button 
@@ -1544,12 +1544,12 @@ export default function AdminDashboard() {
                 <button 
                   onClick={() => {
                     if (selectedCity === 'Cerrado') return;
-                    const defaultHour = selectedShift === 'Mañana' ? '09:00' : '15:00';
+                    const defaultHour = selectedShift === 'Mañana' ? '09:00' : "15:00";
                     setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                     setShowNewTurnoModal(true);
                   }}
                   disabled={selectedCity === 'Cerrado'}
-                  className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+                  className={`w-full md:w-auto px-5 py-2.5 font-bold text-sm text-white rounded-2xl flex items-center justify-center gap-2 shadow-sm transition ${selectedCity === 'Cerrado' ? 'bg-slate-700 text-slate-400 cursor-not-allowed opacity-60' : "bg-emerald-600 hover:bg-emerald-500"}`}
                 >
                   <Plus className="h-4.5 w-4.5" />
                   <span>Nuevo Turno</span>
@@ -1582,15 +1582,15 @@ export default function AdminDashboard() {
                   const morningTurnos = turnos.some(t => t.fechaHora === currentDate && parseInt(t.hora.split(':')[0], 10) < 15);
                   const isMorningAvailable = [0, 5, 6].includes(dayOfWeek) || !!savedConfigs['Mañana'] || morningTurnos;
 
-                  const getCityForShift = (newShift: 'Mañana' | 'Tarde') => {
+                  const getCityForShift = (newShift: "Mañana" | 'Tarde') => {
                     if (savedConfigs[newShift]) return savedConfigs[newShift].ciudad;
                     switch (dayOfWeek) {
                       case 1: case 3: case 4:
-                        return newShift === 'Tarde' ? 'Rosario del Tala' : 'Cerrado';
+                        return newShift === 'Tarde' ? 'Rosario del Tala' : "Cerrado";
                       case 2:
-                        return newShift === 'Tarde' ? 'Maciá' : 'Cerrado';
+                        return newShift === 'Tarde' ? 'Maciá' : "Cerrado";
                       case 5:
-                        return newShift === 'Mañana' ? 'Gualeguay' : 'Galarza';
+                        return newShift === 'Mañana' ? 'Gualeguay' : "Galarza";
                       default:
                         return 'Cerrado';
                     }
@@ -1641,7 +1641,7 @@ export default function AdminDashboard() {
                               setSelectedCity(getCityForShift('Mañana'));
                             }}
                             className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
-                               selectedShift === 'Mañana' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                               selectedShift === 'Mañana' ? 'bg-emerald-600 text-white' : "text-slate-400 hover:text-slate-200"
                             }`}
                           >
                             Mañana
@@ -1652,7 +1652,7 @@ export default function AdminDashboard() {
                                setSelectedCity(getCityForShift('Tarde'));
                              }}
                              className={`px-4 sm:px-6 py-2 text-xs font-bold rounded-xl transition-colors ${
-                               selectedShift === 'Tarde' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                               selectedShift === 'Tarde' ? 'bg-emerald-600 text-white' : "text-slate-400 hover:text-slate-200"
                             }`}
                           >
                             Tarde
@@ -1677,7 +1677,7 @@ export default function AdminDashboard() {
                       onClick={() => {
                         setTempCity(selectedCity);
                         setIsEditingConfig(true);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl shadow-sm transition-colors flex items-center gap-2 mt-2"
                     >
@@ -1696,7 +1696,7 @@ export default function AdminDashboard() {
                         let showTimeline = false;
                         let timelinePercentage = 0;
                         if (isToday && currentTime) {
-                          const options = { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false } as const;
+                          const options = { timeZone: "America/Argentina/Buenos_Aires", hour: "2-digit", minute: "2-digit", hour12: false } as const;
                           const formatter = new Intl.DateTimeFormat('en-US', options);
                           const timeString = formatter.format(currentTime);
                           const [currHr, currMin] = timeString.split(':').map(Number);
@@ -1757,7 +1757,7 @@ export default function AdminDashboard() {
                                           </span>
                                           {appt.updatedAt && appt.updatedBy && (
                                             <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5 block w-full break-words">
-                                              Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false}).replace(', ', ' - ')}hs)
+                                              Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false}).replace(', ', ' - ')}hs)
                                             </span>
                                           )}
                                         </div>
@@ -1839,7 +1839,7 @@ export default function AdminDashboard() {
                         parseInt(currentDate.split('-')[0], 10),
                         parseInt(currentDate.split('-')[1], 10) - 1,
                         1
-                      ).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                      ).toLocaleDateString('es-ES', { month: "long", year: "numeric" })}
                     </h2>
                   </div>
                   <button 
@@ -1908,14 +1908,14 @@ export default function AdminDashboard() {
                               setCalendarViewMode('day');
                             }}
                             className={`min-h-[105px] p-3 flex flex-col justify-between hover:bg-slate-850/30 transition cursor-pointer select-none ${
-                              cell.isCurrentMonth ? 'bg-slate-900 text-slate-100' : 'bg-slate-950/35 text-slate-600'
-                            } ${isSelected ? 'ring-2 ring-emerald-500 ring-inset z-10' : ''}`}
+                              cell.isCurrentMonth ? 'bg-slate-900 text-slate-100' : "bg-slate-950/35 text-slate-600"
+                            } ${isSelected ? 'ring-2 ring-emerald-500 ring-inset z-10' : ""}`}
                           >
                             <div className="flex items-center justify-between">
                               <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${
                                 cell.isToday 
                                   ? 'bg-emerald-600 text-white font-black' 
-                                  : cell.isCurrentMonth ? 'text-slate-300' : 'text-slate-600'
+                                  : cell.isCurrentMonth ? 'text-slate-300' : "text-slate-600"
                               }`}>
                                 {cell.dayNumber}
                               </span>
@@ -1923,7 +1923,7 @@ export default function AdminDashboard() {
 
                             <div className="space-y-1 mt-2">
                               <div className={`text-[10px] font-bold truncate ${
-                                cell.isCurrentMonth ? 'text-slate-200' : 'text-slate-700'
+                                cell.isCurrentMonth ? 'text-slate-200' : "text-slate-700"
                               }`}>
                                 <span className="hidden sm:inline truncate">{sucursalVal}</span>
                                 <span className="sm:hidden truncate">
@@ -1940,7 +1940,7 @@ export default function AdminDashboard() {
                               {dateTurnos.length > 0 && (
                                 <div className="bg-emerald-950/40 border border-emerald-900/30 text-emerald-450 font-black text-[9px] px-1.5 py-0.5 rounded-lg inline-flex items-center gap-1">
                                   <span>{dateTurnos.length}</span>
-                                  <span className="hidden sm:inline">{dateTurnos.length === 1 ? 'turno' : 'turnos'}</span>
+                                  <span className="hidden sm:inline">{dateTurnos.length === 1 ? 'turno' : "turnos"}</span>
                                 </div>
                               )}
                             </div>
@@ -1966,9 +1966,9 @@ export default function AdminDashboard() {
             onClick={() => {
               const scrollContainer = document.getElementById('main-scroll-container');
               if (scrollContainer) {
-                scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
               } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: "smooth" });
               }
             }}
             className="p-3 bg-emerald-600 border border-emerald-500 text-white hover:bg-emerald-500 rounded-full shadow-xl shadow-emerald-900/40 transition"
@@ -2072,7 +2072,7 @@ export default function AdminDashboard() {
                     });
                     
                     let extraMessage = '';
-                    let confirmType: 'warning' | 'danger' | 'info' = 'warning';
+                    let confirmType: "warning" | 'danger' | 'info' = 'warning';
                     
                     if (affectedTurnos.length > 0) {
                       if (tempCity === 'Cerrado') {
@@ -2084,25 +2084,25 @@ export default function AdminDashboard() {
                     }
 
                     setCustomConfirm({
-                      title: 'Modificar Agenda',
+                      title: "Modificar Agenda",
                       message: `¿Estás seguro de modificar la sucursal del día ${currentDate.split('-').reverse().join('/')} a ${tempCity} en el turno ${selectedShift === 'Ninguno' ? 'Ambos turnos' : selectedShift}?${extraMessage}`,
-                      confirmText: tempCity === 'Cerrado' && affectedTurnos.length > 0 ? 'Sí, modificar y eliminar' : 'Sí, guardar',
-                      cancelText: 'Cancelar',
+                      confirmText: tempCity === 'Cerrado' && affectedTurnos.length > 0 ? 'Sí, modificar y eliminar' : "Sí, guardar",
+                      cancelText: "Cancelar",
                       type: confirmType,
                       onConfirm: async () => {
                         try {
                           if (affectedTurnos.length > 0) {
                             if (tempCity === 'Cerrado') {
                               // Delete affected turnos
-                              await Promise.all(affectedTurnos.map(t => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, { method: 'DELETE' })));
+                              await Promise.all(affectedTurnos.map(t => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, { method: "DELETE" })));
                               setTurnos(prev => prev.filter(t => !affectedTurnos.find(at => at.id === t.id)));
                             } else {
                               // Move affected turnos
                               await Promise.all(affectedTurnos.map(t => {
                                 const isoDateTime = `${t.fechaHora}T${t.hora}:00.000Z`;
                                 return fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
+                                  method: "PUT",
+                                  headers: { 'Content-Type': "application/json" },
                                   body: JSON.stringify({
                                     pacienteId: t.pacienteId,
                                     fechaHora: isoDateTime,
@@ -2139,7 +2139,7 @@ export default function AdminDashboard() {
                   className={`px-5 py-2.5 rounded-xl font-bold text-sm transition shadow-sm ${
                     tempCity !== selectedCity 
                       ? 'bg-emerald-600 text-white hover:bg-emerald-500' 
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                      : "bg-slate-800 text-slate-500 cursor-not-allowed"
                   }`}
                 >
                   Guardar Cambios
@@ -2183,7 +2183,7 @@ export default function AdminDashboard() {
                         setActivePacienteIndex(-1);
                         
                         if (newTurno.pacienteId) {
-                          setNewTurno({ ...newTurno, pacienteId: '' });
+                          setNewTurno({ ...newTurno, pacienteId: "" });
                         }
                       }}
                       onFocus={() => setShowPacienteDropdown(pacienteSearchQuery.trim() !== '')}
@@ -2226,7 +2226,7 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         onClick={() => {
-                          setNewTurno({ ...newTurno, pacienteId: '' });
+                          setNewTurno({ ...newTurno, pacienteId: "" });
                           setPacienteSearchQuery('');
                           setShowPacienteDropdown(false);
                         }}
@@ -2264,7 +2264,7 @@ export default function AdminDashboard() {
                           }}
                           onMouseEnter={() => setActivePacienteIndex(idx)}
                           className={`px-4 py-2.5 cursor-pointer font-semibold flex items-center justify-between transition ${
-                            isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : 'text-slate-300 hover:bg-slate-800/60'
+                            isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : "text-slate-300 hover:bg-slate-800/60"
                           }`}
                         >
                           <span>{p.nombre}</span>
@@ -2278,7 +2278,7 @@ export default function AdminDashboard() {
                         onClick={() => handleQuickRegisterPacienteWithName(pacienteSearchQuery)}
                         onMouseEnter={() => setActivePacienteIndex(filteredPatientsForAutocomplete.length)}
                         className={`px-4 py-3 border-t border-slate-800 cursor-pointer font-bold text-emerald-400 hover:bg-emerald-950/20 flex items-center gap-2 transition ${
-                          activePacienteIndex === filteredPatientsForAutocomplete.length ? 'bg-slate-800/60' : ''
+                          activePacienteIndex === filteredPatientsForAutocomplete.length ? 'bg-slate-800/60' : ""
                         }`}
                       >
                         <PlusCircle className="h-4.5 w-4.5 text-emerald-400" />
@@ -2389,7 +2389,7 @@ export default function AdminDashboard() {
               <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewTurnoModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Agendar'}
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Agendar"}
                 </button>
               </div>
             </form>
@@ -2479,7 +2479,7 @@ export default function AdminDashboard() {
                       <button
                         type="button"
                         onClick={() => {
-                          setEditingTurno({ ...editingTurno, pacienteId: 0, pacienteNombre: '' });
+                          setEditingTurno({ ...editingTurno, pacienteId: 0, pacienteNombre: "" });
                           setPacienteSearchQuery('');
                           setShowPacienteDropdown(false);
                         }}
@@ -2517,7 +2517,7 @@ export default function AdminDashboard() {
                           }}
                           onMouseEnter={() => setActivePacienteIndex(idx)}
                           className={`px-4 py-2.5 cursor-pointer font-semibold flex items-center justify-between transition ${
-                            isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : 'text-slate-300 hover:bg-slate-800/60'
+                            isSelected ? 'bg-emerald-600 text-white' : isActive ? 'bg-slate-800 text-slate-200' : "text-slate-300 hover:bg-slate-800/60"
                           }`}
                         >
                           <span>{p.nombre}</span>
@@ -2531,7 +2531,7 @@ export default function AdminDashboard() {
                         onClick={() => handleQuickRegisterPacienteWithNameFromEdit(pacienteSearchQuery)}
                         onMouseEnter={() => setActivePacienteIndex(filteredPatientsForAutocomplete.length)}
                         className={`px-4 py-3 border-t border-slate-800 cursor-pointer font-bold text-emerald-400 hover:bg-emerald-950/20 flex items-center gap-2 transition ${
-                          activePacienteIndex === filteredPatientsForAutocomplete.length ? 'bg-slate-800/60' : ''
+                          activePacienteIndex === filteredPatientsForAutocomplete.length ? 'bg-slate-800/60' : ""
                         }`}
                       >
                         <PlusCircle className="h-4.5 w-4.5 text-emerald-400" />
@@ -2651,8 +2651,7 @@ export default function AdminDashboard() {
                   Cancelar
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Guardar Cambios
-                '}
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Guardar Cambios"}
                 </button>
               </div>
             </form>
@@ -2690,7 +2689,7 @@ export default function AdminDashboard() {
                     setNewPaciente({ ...newPaciente, nombre: e.target.value });
                     if (formErrors.nombre) setFormErrors({ ...formErrors, nombre: undefined });
                   }}
-                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : 'border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700'}`}
+                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : "border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700"}`}
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                 />
@@ -2704,7 +2703,7 @@ export default function AdminDashboard() {
                   onClick={() => setShowOptionalFields(!showOptionalFields)}
                   className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition"
                 >
-                  <span className={`transform transition-transform duration-200 ${showOptionalFields ? 'rotate-90' : ''}`}>▶</span>
+                  <span className={`transform transition-transform duration-200 ${showOptionalFields ? 'rotate-90' : ""}`}>▶</span>
                   <span>Más datos (Opcionales)</span>
                 </button>
               </div>
@@ -2721,7 +2720,7 @@ export default function AdminDashboard() {
                           setNewPaciente({ ...newPaciente, dni: e.target.value.replace(/\D/g, '').slice(0, 8) });
                           if (formErrors.dni) setFormErrors({ ...formErrors, dni: undefined });
                         }}
-                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
+                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
                         placeholder="Ej: 12345678"
                       />
                       {formErrors.dni && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.dni}</span>}
@@ -2750,7 +2749,7 @@ export default function AdminDashboard() {
                           setNewPaciente({ ...newPaciente, email: e.target.value });
                           if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
                         }}
-                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
+                        className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
                         placeholder="Ej: juan@gmail.com"
                       />
                       {formErrors.email && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.email}</span>}
@@ -2781,8 +2780,7 @@ export default function AdminDashboard() {
                   Cancelar
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Registrar Paciente
-                '}
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Registrar Paciente"}
                 </button>
               </div>
             </form>
@@ -2819,7 +2817,7 @@ export default function AdminDashboard() {
                     setEditingPaciente({ ...editingPaciente, nombre: e.target.value });
                     if (formErrors.nombre) setFormErrors({ ...formErrors, nombre: undefined });
                   }}
-                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : 'border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700'}`}
+                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : "border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700"}`}
                   placeholder="Ej: Juan Pérez"
                   autoFocus
                 />
@@ -2837,7 +2835,7 @@ export default function AdminDashboard() {
                         setEditingPaciente({ ...editingPaciente, dni: e.target.value.replace(/\D/g, '').slice(0, 8) });
                         if (formErrors.dni) setFormErrors({ ...formErrors, dni: undefined });
                       }}
-                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
                       placeholder="Ej: 12345678"
                     />
                     {formErrors.dni && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.dni}</span>}
@@ -2866,7 +2864,7 @@ export default function AdminDashboard() {
                         setEditingPaciente({ ...editingPaciente, email: e.target.value });
                         if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
                       }}
-                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : 'border-slate-800 focus:border-slate-700'}`}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
                       placeholder="Ej: juan@gmail.com"
                     />
                     {formErrors.email && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.email}</span>}
@@ -2896,8 +2894,7 @@ export default function AdminDashboard() {
                   Cancelar
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Guardar Cambios
-                '}
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Guardar Cambios"}
                 </button>
               </div>
             </form>
@@ -2958,7 +2955,7 @@ export default function AdminDashboard() {
               <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                 <button type="button" onClick={() => setShowNewHistorialModal(false)} className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition">Cancelar</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : 'Registrar'}
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Registrar"}
                 </button>
               </div>
             </form>
@@ -3004,7 +3001,7 @@ export default function AdminDashboard() {
                 className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl transition shadow-sm ${
                   customConfirm.type === 'danger' 
                     ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-950/20' 
-                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/20'
+                    : "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/20"
                 }`}
               >
                 {customConfirm.confirmText || 'Confirmar'}

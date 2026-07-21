@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../../components/SidebarContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useGlobalData, Paciente, Turno } from '../../components/GlobalDataContext';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -25,26 +26,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-interface Turno {
-  id: number;
-  pacienteId: number;
-  pacienteNombre: string;
-  fechaHora: string;
-  ciudad: string;
-  notas: string;
-  estado: 'PENDIENTE' | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
-  updatedAt?: string;
-  updatedBy?: string;
-}
 
-interface Paciente {
-  id: number;
-  nombre: string;
-  dni: string | null;
-  email: string | null;
-  telefono: string | null;
-  fechaNacimiento: string | null;
-}
 
 export default function HistorialPacientePage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -64,9 +46,12 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
   const pacienteId = parseInt(params.id, 10);
   
-  const [paciente, setPaciente] = useState<Paciente | null>(null);
-  const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pacientes, turnos: allTurnos, setTurnos, loading } = useGlobalData();
+  const paciente = pacientes.find(p => p.id === pacienteId) || null;
+  const turnos = allTurnos
+    .filter(t => t.pacienteId === pacienteId)
+    .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime());
+
   const [selectedTurnos, setSelectedTurnos] = useState<number[]>([]);
 
   const [editingTurno, setEditingTurno] = useState<number | null>(null);
@@ -106,37 +91,6 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [pacienteRes, turnosRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${pacienteId}`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`)
-        ]);
-
-        if (pacienteRes.ok) {
-          const data = await pacienteRes.json();
-          setPaciente(data);
-        }
-
-        if (turnosRes.ok) {
-          const allTurnos: Turno[] = await turnosRes.json();
-          // Filter by patient ID and sort newest first
-          const patientTurnos = allTurnos
-            .filter(t => t.pacienteId === pacienteId)
-            .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime());
-          setTurnos(patientTurnos);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (pacienteId) fetchData();
-  }, [pacienteId]);
 
   const handleEditClick = (turno: Turno) => {
     setEditingTurno(turno.id);

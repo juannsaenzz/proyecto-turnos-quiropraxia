@@ -6,6 +6,7 @@ import logo from '@/assets/2.png';
 import { useRouter } from 'next/navigation';
 import { useSidebar } from '../components/SidebarContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useGlobalData, Paciente, Turno, Historial } from '../components/GlobalDataContext';
 import { 
   Calendar, 
   Users, 
@@ -31,35 +32,6 @@ import {
   Trash2,
   RefreshCw
 } from 'lucide-react';
-
-// Interfaces for our component state
-interface Paciente {
-  id: number;
-  nombre: string;
-  dni?: string;
-  email?: string;
-  telefono?: string;
-  fechaNacimiento?: string;
-}
-
-interface Turno {
-  id: number;
-  pacienteId: number;
-  pacienteNombre: string;
-  fechaHora: string; // YYYY-MM-DD
-  hora: string; // HH:MM
-  ciudad: string;
-  notas: string;
-  estado: "PENDIENTE" | 'CONFIRMADO' | 'ATENDIDO' | 'AUSENTE';
-}
-
-interface Historial {
-  id: number;
-  pacienteId: number;
-  pacienteNombre: string;
-  fecha: string; // YYYY-MM-DD
-  notas: string;
-}
 
 const getCalendarCells = (dateStr: string) => {
   const [yearStr, monthStr] = dateStr.split('-');
@@ -125,6 +97,13 @@ const getCalendarCells = (dateStr: string) => {
 };
 
 export default function AdminDashboard() {
+  // Data lists from global context
+  const { 
+    pacientes, setPacientes, 
+    turnos, setTurnos, 
+    historiales, setHistoriales,
+    loading 
+  } = useGlobalData();
   // Navigation & UI state
   const { setSidebarOpen } = useSidebar();
   const router = useRouter();
@@ -415,71 +394,6 @@ export default function AdminDashboard() {
     );
     return date.toLocaleDateString('es-ES', { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   };
-
-  // Data lists from database
-  const [pacientes, setPacientes] = useState<Paciente[]>([]);
-  const [turnos, setTurnos] = useState<Turno[]>([]);
-  const [historiales, setHistoriales] = useState<Historial[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Load initial data from the database
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadDbData = async () => {
-      try {
-        // 1. Fetch Pacientes
-        const resPacientes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`);
-        if (!resPacientes.ok) throw new Error('Error al cargar pacientes');
-        const dataPacientes = await resPacientes.json();
-        
-        if (isMounted) {
-          setPacientes(dataPacientes);
-        }
-
-        // 2. Fetch Turnos
-        const resTurnos = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`);
-        if (!resTurnos.ok) throw new Error('Error al cargar turnos');
-        const dataTurnos = await resTurnos.json();
-        const mappedTurnos = dataTurnos.map((t: any) => {
-          const datePart = t.fechaHora.split('T')[0];
-          const timePart = t.fechaHora.split('T')[1].substring(0, 5);
-          return {
-            id: t.id,
-            pacienteId: t.pacienteId,
-            pacienteNombre: t.pacienteNombre,
-            fechaHora: datePart,
-            hora: timePart,
-            ciudad: t.ciudad,
-            notas: t.notas,
-            estado: t.estado,
-          };
-        });
-        
-        if (isMounted) {
-          setTurnos(mappedTurnos);
-        }
-
-        // 3. Fetch Historiales
-        const resHistorial = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
-        if (!resHistorial.ok) throw new Error('Error al cargar historiales');
-        const dataHistorial = await resHistorial.json();
-        
-        if (isMounted) {
-          setHistoriales(dataHistorial);
-        }
-      } catch (error) {
-        console.error('Error fetching database records:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    loadDbData();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Form states
   const [newTurno, setNewTurno] = useState({

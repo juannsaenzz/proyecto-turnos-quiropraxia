@@ -165,10 +165,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { GlobalDataProvider } from './components/GlobalDataContext';
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
+      <GlobalDataProvider>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </GlobalDataProvider>
     </SidebarProvider>
   );
 }

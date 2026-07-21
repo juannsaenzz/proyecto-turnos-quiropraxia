@@ -318,74 +318,38 @@ export default function AdminDashboard() {
     return defaults.ciudad;
   };
 
-  // Trigger auto-selection and database lookup when date changes
+  // Trigger auto-selection using already loaded configs when date changes
   useEffect(() => {
-    let isMounted = true;
-    const fetchOverride = async () => {
-      try {
-        const [resLegacy, resManana, resTarde] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}`).catch(() => null),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}_MANANA`).catch(() => null),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia/${currentDate}_TARDE`).catch(() => null),
-        ]);
+    const dataLegacy = allConfigs.find(c => c.fecha === currentDate);
+    const dataManana = allConfigs.find(c => c.fecha === `${currentDate}_MANANA`);
+    const dataTarde = allConfigs.find(c => c.fecha === `${currentDate}_TARDE`);
+    
+    const newConfigs: Record<string, { ciudad: string; bloque: string }> = {};
+    
+    // Legacy config applies to whatever block it specifies, unless overridden
+    if (dataLegacy && dataLegacy.ciudad && dataLegacy.bloque) {
+      const mappedShift = dataLegacy.bloque === 'MANANA' ? 'Mañana' : 'Tarde';
+      newConfigs[mappedShift] = { ciudad: dataLegacy.ciudad, bloque: mappedShift };
+    }
+    if (dataManana && dataManana.ciudad) {
+      newConfigs['Mañana'] = { ciudad: dataManana.ciudad, bloque: 'Mañana' };
+    }
+    if (dataTarde && dataTarde.ciudad) {
+      newConfigs['Tarde'] = { ciudad: dataTarde.ciudad, bloque: 'Tarde' };
+    }
 
-        const parseJson = async (res: Response | null) => {
-          if (!res || !res.ok) return null;
-          try {
-            const text = await res.text();
-            return text ? JSON.parse(text) : null;
-          } catch (e) {
-            return null;
-          }
-        };
-
-        const dataLegacy = await parseJson(resLegacy);
-        const dataManana = await parseJson(resManana);
-        const dataTarde = await parseJson(resTarde);
-        
-        if (isMounted) {
-          const newConfigs: Record<string, { ciudad: string; bloque: string }> = {};
-          
-          // Legacy config applies to whatever block it specifies, unless overridden
-          if (dataLegacy && dataLegacy.ciudad && dataLegacy.bloque) {
-            const mappedShift = dataLegacy.bloque === 'MANANA' ? 'Mañana' : 'Tarde';
-            newConfigs[mappedShift] = { ciudad: dataLegacy.ciudad, bloque: mappedShift };
-          }
-          if (dataManana && dataManana.ciudad) {
-            newConfigs['Mañana'] = { ciudad: dataManana.ciudad, bloque: 'Mañana' };
-          }
-          if (dataTarde && dataTarde.ciudad) {
-            newConfigs['Tarde'] = { ciudad: dataTarde.ciudad, bloque: 'Tarde' };
-          }
-
-          setSavedConfigs(newConfigs);
-          
-          if (newConfigs[selectedShift]) {
-            setSelectedCity(newConfigs[selectedShift].ciudad);
-          } else {
-            const defaults = getDefaultsForDate(currentDate);
-            // Default shift doesn't need to change if they are just loading, 
-            // but if they just landed on the date, update it:
-            setSelectedCity(defaults.ciudad);
-            setSelectedShift(defaults.turno);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching day configuration:', error);
-        if (isMounted) {
-          const defaults = getDefaultsForDate(currentDate);
-          setSelectedCity(defaults.ciudad);
-          setSelectedShift(defaults.turno);
-          setSavedConfigs({});
-        }
-      }
-    };
-
-    fetchOverride();
-    return () => {
-      isMounted = false;
-    };
-  }, [currentDate]);
+    setSavedConfigs(newConfigs);
+    
+    if (newConfigs[selectedShift]) {
+      setSelectedCity(newConfigs[selectedShift].ciudad);
+    } else {
+      const defaults = getDefaultsForDate(currentDate);
+      // Default shift doesn't need to change if they are just loading, 
+      // but if they just landed on the date, update it:
+      setSelectedCity(defaults.ciudad);
+      setSelectedShift(defaults.turno);
+    }
+  }, [currentDate, allConfigs]);
 
   // Check if current configuration is modified compared to what's stored or default
   const isConfigModified = () => {

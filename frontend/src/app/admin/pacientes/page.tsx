@@ -1261,8 +1261,10 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
+          </>
+        )}
+      </main>
 
-          {/* TAB 3: HISTORIAL CLINICO */}
       {showNewTurnoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
           <div className="bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-800">
@@ -2116,9 +2118,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-          </>
-        )}
-      </main>
     </>
   );
 }

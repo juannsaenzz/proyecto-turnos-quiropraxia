@@ -207,6 +207,21 @@ export default function AdminDashboard() {
     }
   }, [showNewTurnoModal, showEditTurnoModal]);
 
+  // Prevent background scrolling when modals are open
+  useEffect(() => {
+    const container = document.getElementById('main-scroll-container');
+    if (container) {
+      if (showNewPacienteModal || showEditPacienteModal || showNewTurnoModal || showEditTurnoModal || customConfirm) {
+        container.style.overflowY = 'hidden';
+      } else {
+        container.style.overflowY = 'auto';
+      }
+    }
+    return () => {
+      if (container) container.style.overflowY = 'auto';
+    };
+  }, [showNewPacienteModal, showEditPacienteModal, showNewTurnoModal, showEditTurnoModal, customConfirm]);
+
   // Pre-populate patient search query when editing a turno
   useEffect(() => {
     if (editingTurno) {

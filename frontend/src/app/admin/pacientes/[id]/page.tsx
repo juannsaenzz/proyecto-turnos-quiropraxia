@@ -94,6 +94,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   useEffect(() => setIsMounted(true), []);
 
   const handleEditClick = (turno: Turno) => {
+    setSelectedTurnos([]);
     setEditingTurno(turno.id);
     setEditNotas(turno.notas || "");
     setEditEstado(turno.estado);
@@ -132,6 +133,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   };
 
   const handleQuickStatusChange = async (id: number, newEstado: Turno['estado']) => {
+    setSelectedTurnos([]);
     setUpdatingStatusId(id);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -159,6 +161,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   };
 
   const handleDeleteSingleTurno = (id: number) => {
+    setSelectedTurnos([]);
     setCustomConfirm({
       title: 'Eliminar Turno',
       message: '¿Estás seguro de que deseas eliminar este turno? Esta acción no se puede deshacer.',

@@ -70,5 +70,6 @@ input[type="time"],
 input[type="datetime-local"] {
   color-scheme: dark;
   padding-right: 12px !important;
+  min-height: 3rem !important; /* Fix for iOS Safari vertically cropping date text */
 }
 

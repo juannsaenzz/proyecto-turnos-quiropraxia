@@ -1311,14 +1311,24 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
-              {visiblePacientesCount < sortedPacientes.length && (
-                <div className="p-4 border-t border-slate-800 flex justify-center bg-slate-900/50">
-                  <button 
-                    onClick={() => setVisiblePacientesCount(prev => prev + 10)}
-                    className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-bold rounded-xl transition border border-slate-700 shadow-sm"
-                  >
-                    Ver más pacientes ({sortedPacientes.length - visiblePacientesCount} ocultos)
-                  </button>
+              {(visiblePacientesCount < sortedPacientes.length || visiblePacientesCount > 10) && (
+                <div className="p-4 border-t border-slate-800 flex justify-center gap-3 bg-slate-900/50">
+                  {visiblePacientesCount < sortedPacientes.length && (
+                    <button 
+                      onClick={() => setVisiblePacientesCount(prev => prev + 10)}
+                      className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-bold rounded-xl transition border border-slate-700 shadow-sm"
+                    >
+                      Ver más ({Math.min(10, sortedPacientes.length - visiblePacientesCount)})
+                    </button>
+                  )}
+                  {visiblePacientesCount > 10 && (
+                    <button 
+                      onClick={() => setVisiblePacientesCount(10)}
+                      className="px-6 py-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition border border-slate-800 shadow-sm"
+                    >
+                      Ver menos
+                    </button>
+                  )}
                 </div>
               )}
             </div>

@@ -563,13 +563,20 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 <button
                   onClick={() => handleSaveTurno(editingTurno)}
                   disabled={isSaving}
-                  className={`px-5 py-2.5 rounded-xl font-bold text-sm transition disabled:opacity-50 ${
+                  className={`px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 disabled:opacity-50 ${
                     (turnos.find(t => t.id === editingTurno)?.notas || "") !== editNotas
                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
                       : 'bg-slate-800 hover:bg-slate-700 text-slate-100'
                   }`}
                 >
-                  Guardar Cambios
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin text-emerald-300" />
+                      <span>Guardando...</span>
+                    </>
+                  ) : (
+                    "Guardar Cambios"
+                  )}
                 </button>
               </div>
             </div>

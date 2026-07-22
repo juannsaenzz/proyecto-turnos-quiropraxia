@@ -6,6 +6,8 @@ import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../../components/SidebarContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useGlobalData, Paciente, Turno } from '../../components/GlobalDataContext';
+import Image from 'next/image';
+import logo from '@/assets/2.png';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -362,15 +364,18 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
-      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 py-4 xl:py-0 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-0 shadow-sm">
-        <div className="flex items-center space-x-4">
+      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col xl:flex-row items-start xl:items-center py-4 xl:py-0 gap-4 xl:gap-0 shadow-sm">
+        <div className="flex items-center justify-between w-full xl:w-auto xl:justify-start space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
             className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
           >
             <Menu className="h-6 w-6" />
           </button>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
+              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
+            </div>
             <button 
               onClick={() => router.back()}
               className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition"
@@ -379,9 +384,16 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               <ArrowLeft className="h-4 w-4" />
             </button>
             <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize hidden sm:block">
-              Historial de Turnos
+              Ficha del paciente
             </h1>
           </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group"
+            title="Actualizar datos"
+          >
+            <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
+          </button>
         </div>
       </header>
 
@@ -566,15 +578,8 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       </main>
 
       {/* Floating Scroll Top & Refresh Buttons */}
-      {showScrollTop && (
+      {showScrollTop && customConfirm === null && editingTurno === null && (
         <div className="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
-          <button
-            onClick={() => window.location.reload()}
-            className="p-3 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-xl shadow-black/50 transition group"
-            title="Actualizar datos"
-          >
-            <RefreshCw className="h-5 w-5 group-hover:rotate-180 transition-transform duration-500" />
-          </button>
           <button
             onClick={() => {
               const scrollContainer = document.getElementById('main-scroll-container');

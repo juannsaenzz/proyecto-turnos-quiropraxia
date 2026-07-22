@@ -23,6 +23,7 @@ import {
   Save,
   PlusCircle,
   SlidersHorizontal,
+  ArrowUp,
   UserPlus,
   ChevronLeft,
   ChevronRight,
@@ -109,6 +110,23 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [isNavigatingGlobal, setIsNavigatingGlobal] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container');
+    const target = scrollContainer || window;
+    
+    const handleScroll = () => {
+      const scrollTop = scrollContainer ? scrollContainer.scrollTop : window.scrollY;
+      if (scrollTop > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    target.addEventListener('scroll', handleScroll);
+    return () => target.removeEventListener('scroll', handleScroll as EventListener);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'turnos' | 'pacientes' | 'historial'>('pacientes');
   const [calendarViewMode, setCalendarViewMode] = useState<'day' | 'month'>('day');
 
@@ -2122,6 +2140,27 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Floating Scroll Top Button */}
+      {showScrollTop && !showNewTurnoModal && !showNewPacienteModal && !showNewHistorialModal && !showEditPacienteModal && customConfirm === null && (
+        <div className="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
+          <button
+            onClick={() => {
+              const scrollContainer = document.getElementById('main-scroll-container');
+              if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
+            }}
+            className="p-3 bg-emerald-600 border border-emerald-500 text-white hover:bg-emerald-500 rounded-full shadow-xl shadow-emerald-900/40 transition"
+            title="Volver arriba"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
       {isNavigatingGlobal && (
         <LoadingSpinner message="Cargando paciente..." />
       )}

@@ -42,7 +42,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   const menuItems = [
-    { id: 'turnos', label: 'Calendario de Turnos', icon: Calendar, path: '/admin/turnos' },
+    { id: 'turnos', label: 'Agenda', icon: Calendar, path: '/admin/turnos' },
     { id: 'pacientes', label: 'Pacientes', icon: Users, path: '/admin/pacientes' },
   ];
 
@@ -87,7 +87,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.id}
                   href={item.path}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
                   className={`
                     w-full flex items-center space-x-3.5 px-5 py-3 rounded-2xl text-sm font-bold transition duration-150
                     ${isActive
@@ -149,8 +152,24 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     Navegación
                   </h3>
                   <ul className="space-y-2 flex flex-col sm:items-end">
-                    <li><Link href="/admin/turnos" className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors">Calendario de Turnos</Link></li>
-                    <li><Link href="/admin/pacientes" className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors">Pacientes</Link></li>
+                    <li>
+                      <Link 
+                        href="/admin/turnos" 
+                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
+                      >
+                        Agenda
+                      </Link>
+                    </li>
+                    <li>
+                      <Link 
+                        href="/admin/pacientes" 
+                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
+                      >
+                        Pacientes
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>

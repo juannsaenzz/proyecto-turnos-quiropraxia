@@ -357,7 +357,7 @@ export default function AdminDashboard() {
     return selectedCity !== defaults.ciudad || selectedShift !== defaults.turno;
   };
 
-  const handleSaveConfig = async (city = selectedCity, shift: "Mañana" | 'Tarde' | 'Ninguno' | 'Ambos turnos' = selectedShift) => {
+  const handleSaveConfig = async (city = selectedCity, shift: "Mañana" | 'Tarde' | 'Ninguno' | 'Ambos turnos' = selectedShift, affectedCount: number = 0) => {
     const shiftsToSave = shift === 'Ambos turnos' || shift === 'Ninguno' ? ['Mañana', 'Tarde'] : [shift];
 
     try {
@@ -388,8 +388,14 @@ export default function AdminDashboard() {
           return [...filtered, { fecha: fetchStr, ciudad: city, bloque: s === 'Mañana' ? 'MANANA' : "TARDE" }];
         });
       }
-      const shiftMsg = shift === 'Ambos turnos' || shift === 'Ninguno' ? 'ambos turnos' : `el turno ${shift.toLowerCase()}`;
-      showToast(`Agenda del ${currentDate.split('-').reverse().join('/')} en ${shiftMsg} modificada a ${city}`);
+      const shiftMsg = shift === 'Ambos turnos' || shift === 'Ninguno' ? 'Ambos turnos' : shift;
+      let msg = `Agenda del día ${currentDate.split('-').reverse().join('/')} en el turno ${shiftMsg} modificada a ${city}`;
+      if (affectedCount > 0) {
+        msg += city === 'Cerrado' 
+          ? `. ${affectedCount} turnos fueron eliminados` 
+          : `. ${affectedCount} turnos fueron movidos a ${city}`;
+      }
+      showToast(msg);
     } catch (error) {
       console.error('Error saving day configuration:', error);
       alert('No se pudo guardar la configuración de la agenda.');
@@ -2056,12 +2062,8 @@ export default function AdminDashboard() {
                             }
                           }
                           setSelectedCity(tempCity);
-                          await handleSaveConfig(tempCity, selectedShift === 'Ninguno' ? 'Ambos turnos' : selectedShift);
+                          await handleSaveConfig(tempCity, selectedShift === 'Ninguno' ? 'Ambos turnos' : selectedShift, affectedTurnos.length);
                           setIsEditingConfig(false);
-                          
-                          if (affectedTurnos.length > 0) {
-                            showToast(tempCity === 'Cerrado' ? `${affectedTurnos.length} turnos eliminados` : `${affectedTurnos.length} turnos movidos a ${tempCity}`);
-                          }
                         } catch (err) {
                           console.error("Error updating affected turnos:", err);
                           alert("Error al procesar los turnos afectados.");

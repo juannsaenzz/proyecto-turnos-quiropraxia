@@ -1313,6 +1313,7 @@ export default function AdminDashboard() {
                   <div className="relative flex-1">
                     <input 
                       type="text"
+                      maxLength={50}
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {
@@ -1562,6 +1563,7 @@ export default function AdminDashboard() {
                   <div className="relative flex-1">
                     <input 
                       type="text"
+                      maxLength={50}
                       placeholder="Buscar por nombre o DNI..."
                       value={pacienteSearchQuery}
                       onChange={(e) => {

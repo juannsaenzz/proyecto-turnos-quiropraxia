@@ -364,41 +364,36 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
-      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col justify-center py-4 xl:py-0 shadow-sm gap-2 sm:gap-0">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2 sm:gap-3">
+      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col justify-center py-4 xl:py-0 shadow-sm">
+        <div className="flex items-center justify-between w-full gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button 
               onClick={() => setSidebarOpen(true)}
-              className="text-slate-400 hover:text-slate-200 p-1.5 sm:p-2 hover:bg-slate-800 rounded-xl"
+              className="text-slate-400 hover:text-slate-200 p-1.5 sm:p-2 hover:bg-slate-800 rounded-xl shrink-0"
             >
               <Menu className="h-6 w-6" />
             </button>
             <button 
               onClick={() => router.back()}
-              className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition flex-shrink-0"
+              className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition shrink-0"
               title="Volver"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
+            <div className="shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
               <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
             </div>
-            <h1 className="hidden sm:block text-xl font-extrabold text-slate-100 tracking-tight whitespace-nowrap">
+            <h1 className="text-base sm:text-xl font-extrabold text-slate-100 tracking-tight truncate">
               Ficha del paciente
             </h1>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group flex-shrink-0 ml-auto"
+            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group shrink-0 ml-auto"
             title="Actualizar datos"
           >
             <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-180 transition-transform duration-500" />
           </button>
-        </div>
-        <div className="sm:hidden w-full flex items-center justify-center pt-1">
-          <h1 className="text-[17px] font-extrabold text-slate-100 tracking-tight whitespace-nowrap">
-            Ficha del paciente
-          </h1>
         </div>
       </header>
 
@@ -434,10 +429,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                       <Pencil className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-slate-400">
-                    {paciente.telefono && <div className="flex items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500" /> {paciente.telefono}</div>}
-                    {paciente.dni && <div className="flex items-center">DNI: {paciente.dni}</div>}
-                    {paciente.email && <div className="flex items-center">{paciente.email}</div>}
+                  <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm font-medium text-slate-400">
+                    {paciente.telefono && <div className="flex items-start sm:items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5 sm:mt-0" /> <span className="break-all whitespace-normal">{paciente.telefono}</span></div>}
+                    {paciente.dni && <div className="flex items-center shrink-0">DNI: {paciente.dni}</div>}
+                    {paciente.email && <div className="flex items-center break-all whitespace-normal">{paciente.email}</div>}
                   </div>
                 </div>
               </div>

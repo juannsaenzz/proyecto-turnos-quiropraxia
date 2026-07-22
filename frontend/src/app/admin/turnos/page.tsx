@@ -1680,12 +1680,12 @@ export default function AdminDashboard() {
                                       </div>
                                       
                                       {/* Right: State Selector and Actions */}
-                                      <div className="flex flex-wrap items-center gap-4 justify-center w-full mt-3 md:mt-0 md:w-auto md:justify-end">
+                                      <div className="flex flex-wrap items-center gap-4 justify-center mt-3 md:mt-0 md:w-auto md:justify-end">
                                         <div className="relative inline-flex items-center">
                                           <select
                                             value={appt.estado}
                                             onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
-                                            className={`pl-3 pr-7 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-[11px] font-black border uppercase tracking-widest outline-none cursor-pointer hover:opacity-80 transition appearance-none ${styles.badge}`}
+                                            className={`pl-3 pr-7 py-1 md:py-1.5 rounded-lg text-xs font-black border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none ${styles.badge}`}
                                           >
                                             <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
                                             <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>
@@ -2934,6 +2934,20 @@ export default function AdminDashboard() {
 
       {(updatingStatusId !== null || isBulkUpdating) && (
         <LoadingSpinner message="Actualizando estado..." />
+      )}
+
+      {isNavigatingGlobal && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+          <div className="animate-spin text-emerald-500 mb-4"><RefreshCw className="h-8 w-8" /></div>
+          <span className="text-emerald-500 font-bold">Cargando paciente...</span>
+        </div>
+      )}
+
+      {isRegisteringQuick && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+          <div className="animate-spin text-emerald-500 mb-4"><RefreshCw className="h-8 w-8" /></div>
+          <span className="text-emerald-500 font-bold">Registrando paciente...</span>
+        </div>
       )}
     </>
   );

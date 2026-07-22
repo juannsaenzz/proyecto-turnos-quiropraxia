@@ -70,6 +70,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
   const [sortOption, setSortOption] = useState<'desc' | 'asc'>('desc');
   const [statusFilter, setStatusFilter] = useState<'TODOS' | Turno['estado']>('TODOS');
+  const [visibleTurnosCount, setVisibleTurnosCount] = useState(5);
 
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;
@@ -361,11 +362,17 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     }
   };
 
+  const processedTurnos = [...turnos].filter(t => statusFilter === 'TODOS' || t.estado === statusFilter).sort((a, b) => {
+    const dateA = new Date(a.fechaHora).getTime();
+    const dateB = new Date(b.fechaHora).getTime();
+    return sortOption === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
-      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col justify-center py-4 xl:py-0 shadow-sm">
-        <div className="flex items-center justify-between w-full gap-2">
+      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col xl:flex-row items-start xl:items-center py-4 xl:py-0 gap-4 xl:gap-0 shadow-sm">
+        <div className="flex items-center justify-between w-full xl:w-auto xl:justify-start gap-2 sm:space-x-4">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button 
               onClick={() => setSidebarOpen(true)}
@@ -384,12 +391,12 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
             </div>
             <h1 className="text-base sm:text-xl font-extrabold text-slate-100 tracking-tight truncate">
-              Ficha del paciente
+              Ficha del Paciente
             </h1>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group shrink-0 ml-auto"
+            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group shrink-0"
             title="Actualizar datos"
           >
             <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-180 transition-transform duration-500" />
@@ -482,7 +489,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                   <h3 className="text-lg font-bold text-slate-300">Sin historial</h3>
                   <p className="text-slate-500 mt-2">Este paciente aún no tiene turnos registrados.</p>
                 </div>
-              ) : turnos.filter(t => statusFilter === 'TODOS' || t.estado === statusFilter).length === 0 ? (
+              ) : processedTurnos.length === 0 ? (
                 <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center shadow-lg">
                   <Calendar className="h-12 w-12 text-slate-700 mx-auto mb-4" />
                   <h3 className="text-lg font-bold text-slate-300">Sin resultados</h3>
@@ -490,11 +497,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {[...turnos].filter(t => statusFilter === 'TODOS' || t.estado === statusFilter).sort((a, b) => {
-                    const dateA = new Date(a.fechaHora).getTime();
-                    const dateB = new Date(b.fechaHora).getTime();
-                    return sortOption === 'desc' ? dateB - dateA : dateA - dateB;
-                  }).map((turno) => (
+                  {processedTurnos.slice(0, visibleTurnosCount).map((turno) => (
                     <div key={turno.id} className={`group border rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md'}`}>
                       
                       {/* Left: Checkbox, Date & Time */}
@@ -570,6 +573,26 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                       
                     </div>
                   ))}
+                  {(visibleTurnosCount < processedTurnos.length || visibleTurnosCount > 5) && (
+                    <div className="pt-4 flex justify-center gap-3">
+                      {visibleTurnosCount < processedTurnos.length && (
+                        <button 
+                          onClick={() => setVisibleTurnosCount(prev => prev + 5)}
+                          className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-sm font-bold rounded-xl transition border border-slate-700 shadow-sm"
+                        >
+                          Ver más ({Math.min(5, processedTurnos.length - visibleTurnosCount)})
+                        </button>
+                      )}
+                      {visibleTurnosCount > 5 && (
+                        <button 
+                          onClick={() => setVisibleTurnosCount(5)}
+                          className="px-6 py-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-sm font-bold rounded-xl transition border border-slate-800 shadow-sm"
+                        >
+                          Ver menos
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

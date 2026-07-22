@@ -1138,6 +1138,7 @@ export default function AdminDashboard() {
                         setShowGlobalSearchDropdown(false);
                         setGlobalSearchQuery('');
                         setSearchQuery('');
+                        setIsNavigatingGlobal(true);
                         router.push(`/admin/pacientes/${p.id}`);
                       }}
                     >
@@ -2122,10 +2123,7 @@ export default function AdminDashboard() {
         </div>
       )}
       {isNavigatingGlobal && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-sm">
-          <div className="animate-spin text-emerald-500 mb-4"><RefreshCw className="h-8 w-8" /></div>
-          <span className="text-emerald-500 font-bold">Cargando paciente...</span>
-        </div>
+        <LoadingSpinner message="Cargando paciente..." />
       )}
     </>
   );

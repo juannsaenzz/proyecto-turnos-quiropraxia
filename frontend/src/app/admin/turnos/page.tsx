@@ -2620,7 +2620,7 @@ export default function AdminDashboard() {
                   onClick={() => setShowOptionalFields(!showOptionalFields)}
                   className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-200 transition"
                 >
-                  <span className={`transform transition-transform duration-200 ${showOptionalFields ? 'rotate-90' : ""}`}>▶</span>
+                  <ChevronRight className={`h-4 w-4 transform transition-transform duration-200 ${showOptionalFields ? 'rotate-90' : ""}`} />
                   <span>Más datos (Opcionales)</span>
                 </button>
               </div>

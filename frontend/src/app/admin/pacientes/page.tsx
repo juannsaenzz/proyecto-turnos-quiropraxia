@@ -544,7 +544,10 @@ export default function AdminDashboard() {
 
   const handleCreateTurno = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTurno.pacienteId) { alert("Por favor, selecciona un paciente."); return; }
+    if (!newTurno.pacienteId) {
+      setFormErrors({ ...formErrors, pacienteId: "El paciente es obligatorio." });
+      return;
+    }
     
     const p = pacientes.find(pat => pat.id === parseInt(newTurno.pacienteId));
     if (!p) return;
@@ -1297,7 +1300,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleCreateTurno(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4">
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleCreateTurno(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4" noValidate>
               <div className="space-y-1.5 relative">
                 {showPacienteDropdown && (
                   <div 
@@ -1315,6 +1318,7 @@ export default function AdminDashboard() {
                       onChange={(e) => {
                         const val = e.target.value;
                         setPacienteSearchQuery(val);
+                        if (formErrors.pacienteId) setFormErrors({ ...formErrors, pacienteId: undefined });
                         setShowPacienteDropdown(val.trim() !== '');
                         setActivePacienteIndex(-1);
                         
@@ -1354,9 +1358,9 @@ export default function AdminDashboard() {
                           setShowPacienteDropdown(false);
                         }
                       }}
-                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700 transition"
-                      required
+                      className={`w-full pl-4 pr-10 py-3 border rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 transition ${formErrors.pacienteId ? 'border-rose-500 bg-slate-950 focus:ring-rose-500' : 'border-slate-800 bg-slate-950 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500'}`}
                     />
+                    {formErrors.pacienteId && <span className="text-rose-500 text-xs font-bold mt-1 block absolute -bottom-5 left-1">{formErrors.pacienteId}</span>}
                     
                     {newTurno.pacienteId ? (
                       <button

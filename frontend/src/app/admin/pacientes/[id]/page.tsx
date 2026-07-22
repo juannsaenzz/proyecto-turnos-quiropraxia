@@ -263,6 +263,38 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     });
   };
 
+  const handleDeletePaciente = () => {
+    if (!paciente) return;
+    setCustomConfirm({
+      title: "Eliminar Paciente",
+      message: `¿Estás seguro de que deseas eliminar al paciente "${paciente.nombre}"? Esta acción borrará de forma permanente todos sus turnos y su historial de turnos.`,
+      confirmText: "Sí, eliminar",
+      cancelText: "Cancelar",
+      type: "danger",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${paciente.id}`, {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Error al eliminar el paciente');
+          }
+
+          setPacientes(prev => prev.filter(p => p.id !== paciente.id));
+          setTurnos(prev => prev.filter(t => t.pacienteId !== paciente.id));
+          setHistoriales(prev => prev.filter(h => h.pacienteId !== paciente.id));
+
+          router.push('/admin/pacientes');
+        } catch (error: any) {
+          console.error('Error deleting patient:', error);
+          alert(error.message || 'No se pudo eliminar el paciente.');
+        }
+      }
+    });
+  };
+
   const toggleTurnoSelection = (id: number) => {
     setSelectedTurnos(prev => 
       prev.includes(id) ? prev.filter(tId => tId !== id) : [...prev, id]
@@ -425,16 +457,25 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-4 flex-wrap">
                     <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
-                    <button 
-                      onClick={() => {
-                        setEditingPaciente(paciente);
-                        setShowEditPacienteModal(true);
-                      }}
-                      className="p-1 md:p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center shrink-0"
-                      title="Editar Paciente"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          setEditingPaciente(paciente);
+                          setShowEditPacienteModal(true);
+                        }}
+                        className="p-1 md:p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center shrink-0"
+                        title="Editar Paciente"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={handleDeletePaciente}
+                        className="p-1 md:p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center shrink-0"
+                        title="Eliminar Paciente"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                   <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm font-medium text-slate-400">
                     {paciente.telefono && <div className="flex items-start sm:items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5 sm:mt-0" /> <span className="break-all whitespace-normal">{paciente.telefono}</span></div>}

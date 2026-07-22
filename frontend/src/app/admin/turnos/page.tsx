@@ -2142,8 +2142,7 @@ export default function AdminDashboard() {
                       }}
                       className={`w-full pl-4 pr-10 py-3 border rounded-2xl text-sm font-semibold text-white focus:outline-none focus:ring-1 transition ${formErrors.pacienteId ? 'border-rose-500 bg-slate-950 focus:ring-rose-500' : 'border-slate-800 bg-slate-950 focus:ring-emerald-500 focus:bg-slate-900 focus:border-emerald-500'}`}
                     />
-                    {formErrors.pacienteId && <span className="text-rose-500 text-xs font-bold mt-1 block absolute -bottom-5 left-1">{formErrors.pacienteId}</span>}
-                    
+
                     {pacienteSearchQuery.length > 0 ? (
                       <button
                         type="button"
@@ -2170,6 +2169,7 @@ export default function AdminDashboard() {
                     <UserPlus className="h-4.5 w-4.5" />
                   </button>
                 </div>
+                {formErrors.pacienteId && <span className="text-rose-500 text-xs font-bold pl-1 block">{formErrors.pacienteId}</span>}
 
                 {showPacienteDropdown && (
                   <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto bg-slate-950 border border-slate-850 rounded-2xl shadow-2xl py-1.5 text-sm">

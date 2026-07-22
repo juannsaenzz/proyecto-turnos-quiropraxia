@@ -79,7 +79,7 @@ input[type="datetime-local"] {
 
 /* Prevent iOS Safari from zooming in on input focus */
 @media screen and (max-width: 768px) {
-  input, select, textarea {
+  input:not(.no-text-scale), select:not(.no-text-scale), textarea:not(.no-text-scale) {
     font-size: 16px !important;
   }
 }

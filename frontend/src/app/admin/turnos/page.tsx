@@ -1686,7 +1686,7 @@ export default function AdminDashboard() {
                                           <select
                                             value={appt.estado}
                                             onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
-                                            className={`pl-3 pr-7 py-1 md:py-1.5 rounded-lg text-xs font-black border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none ${styles.badge}`}
+                                            className={`pl-3 pr-7 py-1 md:py-1.5 rounded-lg text-[10px] md:text-xs font-black border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none no-text-scale ${styles.badge}`}
                                           >
                                             <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
                                             <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>

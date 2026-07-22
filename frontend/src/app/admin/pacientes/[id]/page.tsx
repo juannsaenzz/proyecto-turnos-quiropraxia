@@ -67,6 +67,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const [isSaving, setIsSaving] = useState(false);
   const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
   const [sortOption, setSortOption] = useState<'desc' | 'asc'>('desc');
+  const [statusFilter, setStatusFilter] = useState<'TODOS' | Turno['estado']>('TODOS');
 
   const [customConfirm, setCustomConfirm] = useState<{
     title: string;
@@ -434,16 +435,32 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             <div>
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-sm mb-6">
                 <span className="text-xl font-extrabold text-slate-100 tracking-tight">Historial de Turnos</span>
-                <div className="relative inline-flex items-center w-full sm:w-auto">
-                  <select
-                    value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value as any)}
-                    className="w-full sm:w-auto appearance-none bg-slate-950 border border-slate-800 text-slate-300 text-sm font-semibold rounded-xl px-4 py-2 pr-10 focus:outline-none focus:border-emerald-500 transition cursor-pointer hover:bg-slate-900"
-                  >
-                    <option value="desc">Más recientes primero</option>
-                    <option value="asc">Más antiguos primero</option>
-                  </select>
-                  <ChevronDown className="absolute right-3 h-4 w-4 text-slate-500 pointer-events-none" />
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="relative inline-flex items-center w-full sm:w-auto">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as any)}
+                      className="w-full sm:w-auto appearance-none bg-slate-950 border border-slate-800 text-slate-300 text-sm font-semibold rounded-xl px-4 py-2 pr-10 focus:outline-none focus:border-emerald-500 transition cursor-pointer hover:bg-slate-900"
+                    >
+                      <option value="TODOS">Todos los estados</option>
+                      <option value="PENDIENTE">Solo Pendientes</option>
+                      <option value="CONFIRMADO">Solo Confirmados</option>
+                      <option value="ATENDIDO">Solo Atendidos</option>
+                      <option value="AUSENTE">Solo Ausentes</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 h-4 w-4 text-slate-500 pointer-events-none" />
+                  </div>
+                  <div className="relative inline-flex items-center w-full sm:w-auto">
+                    <select
+                      value={sortOption}
+                      onChange={(e) => setSortOption(e.target.value as any)}
+                      className="w-full sm:w-auto appearance-none bg-slate-950 border border-slate-800 text-slate-300 text-sm font-semibold rounded-xl px-4 py-2 pr-10 focus:outline-none focus:border-emerald-500 transition cursor-pointer hover:bg-slate-900"
+                    >
+                      <option value="desc">Más recientes primero</option>
+                      <option value="asc">Más antiguos primero</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 h-4 w-4 text-slate-500 pointer-events-none" />
+                  </div>
                 </div>
               </div>
               
@@ -453,9 +470,15 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                   <h3 className="text-lg font-bold text-slate-300">Sin historial</h3>
                   <p className="text-slate-500 mt-2">Este paciente aún no tiene turnos registrados.</p>
                 </div>
+              ) : turnos.filter(t => statusFilter === 'TODOS' || t.estado === statusFilter).length === 0 ? (
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center shadow-lg">
+                  <Calendar className="h-12 w-12 text-slate-700 mx-auto mb-4" />
+                  <h3 className="text-lg font-bold text-slate-300">Sin resultados</h3>
+                  <p className="text-slate-500 mt-2">No se encontraron turnos con el estado seleccionado.</p>
+                </div>
               ) : (
                 <div className="space-y-4">
-                  {[...turnos].sort((a, b) => {
+                  {[...turnos].filter(t => statusFilter === 'TODOS' || t.estado === statusFilter).sort((a, b) => {
                     const dateA = new Date(a.fechaHora).getTime();
                     const dateB = new Date(b.fechaHora).getTime();
                     return sortOption === 'desc' ? dateB - dateA : dateA - dateB;

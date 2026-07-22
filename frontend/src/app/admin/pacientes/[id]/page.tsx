@@ -839,6 +839,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 </label>
                 <input 
                   type="text"
+                  maxLength={50}
                   value={editingPaciente.nombre}
                   onChange={(e) => {
                     setEditingPaciente({ ...editingPaciente, nombre: e.target.value });
@@ -871,6 +872,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                     <label className="text-xs text-slate-450 font-bold block uppercase">Teléfono</label>
                     <input 
                       type="text"
+                      maxLength={20}
                       value={editingPaciente.telefono || ''}
                       onChange={(e) => {
                         setEditingPaciente({ ...editingPaciente, telefono: e.target.value.replace(/\D/g, '') });

@@ -1810,6 +1810,7 @@ export default function AdminDashboard() {
                 </label>
                 <input 
                   type="text"
+                  maxLength={50}
                   value={newPaciente.nombre}
                   onChange={(e) => {
                     setNewPaciente({ ...newPaciente, nombre: e.target.value });
@@ -1855,6 +1856,7 @@ export default function AdminDashboard() {
                       <label className="text-xs text-slate-400 font-bold block uppercase">Teléfono</label>
                       <input 
                         type="text"
+                        maxLength={20}
                         value={newPaciente.telefono}
                         onChange={(e) => {
                           setNewPaciente({ ...newPaciente, telefono: e.target.value.replace(/\D/g, '') });
@@ -1938,6 +1940,7 @@ export default function AdminDashboard() {
                 </label>
                 <input 
                   type="text"
+                  maxLength={50}
                   value={editingPaciente.nombre}
                   onChange={(e) => {
                     setEditingPaciente({ ...editingPaciente, nombre: e.target.value });
@@ -1970,6 +1973,7 @@ export default function AdminDashboard() {
                     <label className="text-xs text-slate-450 font-bold block uppercase">Teléfono</label>
                     <input 
                       type="text"
+                      maxLength={20}
                       value={editingPaciente.telefono || ''}
                       onChange={(e) => {
                         setEditingPaciente({ ...editingPaciente, telefono: e.target.value.replace(/\D/g, '') });

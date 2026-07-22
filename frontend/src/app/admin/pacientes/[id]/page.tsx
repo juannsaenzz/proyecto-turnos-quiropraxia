@@ -365,31 +365,31 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
       <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col xl:flex-row items-start xl:items-center py-4 xl:py-0 gap-4 xl:gap-0 shadow-sm">
-        <div className="flex items-center justify-between w-full xl:w-auto xl:justify-start space-x-4">
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
-              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
-            </div>
+        <div className="flex items-center justify-between w-full xl:w-auto xl:justify-start space-x-2 sm:space-x-4">
+          <div className="flex items-center gap-1 sm:gap-3">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="text-slate-400 hover:text-slate-200 p-1.5 sm:p-2 hover:bg-slate-800 rounded-xl"
+            >
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
             <button 
               onClick={() => router.back()}
-              className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition"
+              className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition flex-shrink-0"
               title="Volver"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
-            <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize hidden sm:block">
+            <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 sm:w-12 sm:h-12">
+              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
+            </div>
+            <h1 className="text-sm sm:text-xl font-extrabold text-slate-100 tracking-tight whitespace-nowrap">
               Ficha del paciente
             </h1>
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group"
+            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group flex-shrink-0 ml-auto"
             title="Actualizar datos"
           >
             <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />

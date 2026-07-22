@@ -1658,7 +1658,7 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex flex-col min-w-0">
                                           <span 
-                                            className="font-extrabold text-base tracking-tight text-slate-100 break-words"
+                                            className="font-extrabold text-xl tracking-tight text-slate-100 break-words pr-2 line-clamp-2"
                                             title={appt.pacienteNombre}
                                           >
                                             {appt.pacienteNombre}
@@ -1867,7 +1867,7 @@ export default function AdminDashboard() {
         </main>
 
       {/* Floating Scroll Top & Refresh Buttons */}
-      {showScrollTop && (
+      {showScrollTop && !showNewTurnoModal && !showNewPacienteModal && !showNewHistorialModal && !showEditPacienteModal && !showEditTurnoModal && customConfirm === null && !isEditingConfig && (
         <div className="fixed bottom-6 right-6 z-[80] flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300">
 
           <button

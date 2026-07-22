@@ -410,7 +410,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                         setEditingPaciente(paciente);
                         setShowEditPacienteModal(true);
                       }}
-                      className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0"
+                      className="p-1 md:p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center shrink-0"
                       title="Editar Paciente"
                     >
                       <Pencil className="h-4 w-4" />
@@ -586,7 +586,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           {/* Action Body */}
           <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
             
-            <button onClick={deleteSelected} className="p-2 px-3 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0 gap-2 w-full sm:w-auto" title="Eliminar Seleccionados">
+            <button onClick={deleteSelected} className="p-2 px-3 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center shrink-0 gap-2 w-full sm:w-auto" title="Eliminar Seleccionados">
               <Trash2 className="h-4 w-4" />
               <span className="sm:hidden text-xs font-bold">Eliminar Seleccionados</span>
             </button>

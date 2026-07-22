@@ -116,6 +116,8 @@ export default function AdminDashboard() {
   // Navigation & UI state
   const { setSidebarOpen } = useSidebar();
   const router = useRouter();
+  const [isNavigatingGlobal, setIsNavigatingGlobal] = useState(false);
+  const [isRegisteringQuick, setIsRegisteringQuick] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [showGlobalSearchDropdown, setShowGlobalSearchDropdown] = useState(false);
   const globalSearchRef = useRef<HTMLDivElement>(null);
@@ -751,6 +753,7 @@ export default function AdminDashboard() {
 
   const handleQuickRegisterPacienteWithName = async (name: string) => {
     if (!name || !name.trim()) return;
+    setIsRegisteringQuick(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: "POST",
@@ -776,11 +779,14 @@ export default function AdminDashboard() {
     } catch (error: any) {
       console.error('Error creating patient quickly:', error);
       alert(error.message || 'No se pudo registrar el paciente.');
+    } finally {
+      setIsRegisteringQuick(false);
     }
   };
 
   const handleQuickRegisterPacienteWithNameFromEdit = async (name: string) => {
     if (!name || !name.trim()) return;
+    setIsRegisteringQuick(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: "POST",
@@ -808,6 +814,8 @@ export default function AdminDashboard() {
     } catch (error: any) {
       console.error('Error creating patient quickly:', error);
       alert(error.message || 'No se pudo registrar el paciente.');
+    } finally {
+      setIsRegisteringQuick(false);
     }
   };
 
@@ -1227,8 +1235,8 @@ export default function AdminDashboard() {
       )}
 
       {/* Top Header */}
-      <header className="h-auto md:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 md:px-8 flex flex-col md:flex-row items-start md:items-center py-4 md:py-0 gap-4 md:gap-0">
-        <div className="flex items-center justify-between w-full md:w-auto md:justify-start space-x-4">
+      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col xl:flex-row items-start xl:items-center py-4 xl:py-0 gap-4 xl:gap-0">
+        <div className="flex items-center justify-between w-full xl:w-auto xl:justify-start space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
             className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
@@ -1253,7 +1261,7 @@ export default function AdminDashboard() {
         </div>
         
         {/* Global Paciente Search */}
-        <div className="relative md:absolute md:left-1/2 md:-translate-x-1/2 w-full md:w-96" ref={globalSearchRef}>
+        <div className="relative xl:absolute xl:left-1/2 xl:-translate-x-1/2 w-full xl:w-96" ref={globalSearchRef}>
           <div className="relative w-full">
             <input
               type="text"
@@ -1677,7 +1685,7 @@ export default function AdminDashboard() {
                                           <select
                                             value={appt.estado}
                                             onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
-                                            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-6 sm:pr-8 ${styles.badge}`}
+                                            className={`pl-3 pr-7 py-1 sm:py-1.5 rounded-lg text-[10px] sm:text-[11px] font-black border uppercase tracking-widest outline-none cursor-pointer hover:opacity-80 transition appearance-none ${styles.badge}`}
                                           >
                                             <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
                                             <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>

@@ -291,7 +291,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
-      <header className="h-auto md:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 md:px-8 py-4 md:py-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 shadow-sm">
+      <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 py-4 xl:py-0 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 xl:gap-0 shadow-sm">
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}

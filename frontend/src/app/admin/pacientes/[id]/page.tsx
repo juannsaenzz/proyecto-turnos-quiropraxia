@@ -291,7 +291,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
-      <header className="h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex items-center justify-between shadow-sm">
+      <header className="h-auto md:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 md:px-8 py-4 md:py-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0 shadow-sm">
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
@@ -333,7 +333,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                   <User className="h-10 w-10 text-emerald-500" />
                 </div>
                 <div className="min-w-0">
-                  <h2 className="text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-slate-400">
                     {paciente.telefono && <div className="flex items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500" /> {paciente.telefono}</div>}
                     {paciente.dni && <div className="flex items-center">DNI: {paciente.dni}</div>}

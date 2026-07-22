@@ -60,7 +60,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           <div className="h-20 px-6 border-b border-slate-800 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div>
-                <span className="font-extrabold text-slate-100 block leading-tight text-base tracking-tight">Hola, {userName || 'Doc'}</span>
+                <span className="font-extrabold text-slate-100 block leading-tight text-xl tracking-tight">Hola, {userName || 'Doc'}</span>
               </div>
             </div>
             <button

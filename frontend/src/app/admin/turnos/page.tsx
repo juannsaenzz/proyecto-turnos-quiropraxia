@@ -1227,8 +1227,8 @@ export default function AdminDashboard() {
       )}
 
       {/* Top Header */}
-      <header className="h-auto sm:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center py-4 sm:py-0 gap-4 sm:gap-0">
-        <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start space-x-4">
+      <header className="h-auto md:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 md:px-8 flex flex-col md:flex-row items-start md:items-center py-4 md:py-0 gap-4 md:gap-0">
+        <div className="flex items-center justify-between w-full md:w-auto md:justify-start space-x-4">
           <button 
             onClick={() => setSidebarOpen(true)}
             className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
@@ -1253,7 +1253,7 @@ export default function AdminDashboard() {
         </div>
         
         {/* Global Paciente Search */}
-        <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2 w-full sm:w-64 md:w-96" ref={globalSearchRef}>
+        <div className="relative md:absolute md:left-1/2 md:-translate-x-1/2 w-full md:w-96" ref={globalSearchRef}>
           <div className="relative w-full">
             <input
               type="text"
@@ -1677,7 +1677,7 @@ export default function AdminDashboard() {
                                           <select
                                             value={appt.estado}
                                             onChange={(e) => updateTurnoEstado(appt.id, e.target.value as any)}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-8 ${styles.badge}`}
+                                            className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-extrabold border uppercase tracking-wider outline-none cursor-pointer hover:opacity-80 transition appearance-none pr-6 sm:pr-8 ${styles.badge}`}
                                           >
                                             <option value="PENDIENTE" className="text-slate-800 bg-white">PENDIENTE</option>
                                             <option value="CONFIRMADO" className="text-slate-800 bg-white">CONFIRMADO</option>

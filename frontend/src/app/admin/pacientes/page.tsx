@@ -107,6 +107,7 @@ export default function AdminDashboard() {
   // Navigation & UI state
   const { setSidebarOpen } = useSidebar();
   const router = useRouter();
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [activeTab, setActiveTab] = useState<'turnos' | 'pacientes' | 'historial'>('pacientes');
   const [calendarViewMode, setCalendarViewMode] = useState<'day' | 'month'>('day');
 
@@ -1060,8 +1061,8 @@ export default function AdminDashboard() {
       )}
 
       {/* Top Header */}
-      <header className="h-auto sm:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 sm:px-8 flex flex-col sm:flex-row items-start sm:items-center py-4 sm:py-0 gap-4 sm:gap-0">
-          <div className="flex items-center justify-between w-full sm:w-auto sm:justify-start space-x-4">
+      <header className="h-auto md:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 md:px-8 flex flex-col md:flex-row items-start md:items-center py-4 md:py-0 gap-4 md:gap-0">
+          <div className="flex items-center justify-between w-full md:w-auto md:justify-start space-x-4">
             <button 
               onClick={() => setSidebarOpen(true)}
               className="text-slate-400 hover:text-slate-200 p-2 hover:bg-slate-800 rounded-xl ml-2 sm:ml-0"
@@ -1086,7 +1087,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Global Paciente Search */}
-          <div className="relative sm:absolute sm:left-1/2 sm:-translate-x-1/2 w-full sm:w-64 md:w-96" ref={globalSearchRef}>
+          <div className="relative md:absolute md:left-1/2 md:-translate-x-1/2 w-full md:w-96" ref={globalSearchRef}>
             <div className="relative w-full">
               <input
                 type="text"

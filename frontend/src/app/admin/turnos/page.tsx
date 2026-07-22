@@ -1703,17 +1703,17 @@ export default function AdminDashboard() {
                                               setPacienteSearchQuery(appt.pacienteNombre || '');
                                               setShowEditTurnoModal(true);
                                             }}
-                                            className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
+                                            className="p-1 md:p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"
                                             title="Editar turno"
                                           >
-                                            <Pencil className="h-4 w-4" />
+                                            <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
                                           </button>
                                           <button 
                                             onClick={() => handleDeleteTurno(appt.id)}
-                                            className="p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center"
+                                            className="p-1 md:p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"
                                             title="Eliminar turno"
                                           >
-                                            <Trash2 className="h-4 w-4" />
+                                            <Trash2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                                           </button>
                                         </div>
                                       </div>

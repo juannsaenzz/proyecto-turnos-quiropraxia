@@ -28,6 +28,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  React.useEffect(() => {
+    const scrollContainer = document.getElementById('main-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
   const handleSignOut = async () => {
     setIsLoggingOut(true);
     await supabase.auth.signOut();

@@ -1253,7 +1253,7 @@ export default function AdminDashboard() {
           <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-inner">
             <Check className="h-7 w-7 text-emerald-400 stroke-[3]" />
           </div>
-          <span className="text-base font-bold text-slate-100 leading-snug break-all">{toastMessage}</span>
+          <span className="text-base font-bold text-slate-100 leading-snug break-words">{toastMessage}</span>
         </div>
       )}
 

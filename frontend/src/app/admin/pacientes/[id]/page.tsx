@@ -23,7 +23,8 @@ import {
   ChevronDown,
   AlertCircle,
   ArrowUp,
-  RefreshCw
+  RefreshCw,
+  Pencil
 } from 'lucide-react';
 
 
@@ -46,13 +47,19 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
   const pacienteId = parseInt(params.id, 10);
   
-  const { pacientes, turnos: allTurnos, setTurnos, loading } = useGlobalData();
+  const { pacientes, turnos: allTurnos, setTurnos, setPacientes, setHistoriales, loading } = useGlobalData();
   const paciente = pacientes.find(p => p.id === pacienteId) || null;
   const turnos = allTurnos
     .filter(t => t.pacienteId === pacienteId)
     .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime());
 
   const [selectedTurnos, setSelectedTurnos] = useState<number[]>([]);
+
+  // Modales de edicion de paciente
+  const [showEditPacienteModal, setShowEditPacienteModal] = useState(false);
+  const [editingPaciente, setEditingPaciente] = useState<Paciente | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string | undefined>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [editingTurno, setEditingTurno] = useState<number | null>(null);
   const [editNotas, setEditNotas] = useState("");
@@ -92,6 +99,69 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
+
+  const handleUpdatePaciente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingPaciente) return;
+
+    const errors: Record<string, string> = {};
+    if (!editingPaciente.nombre.trim()) {
+      errors.nombre = "El nombre completo es obligatorio.";
+    }
+
+    const dniTrimmed = editingPaciente.dni ? editingPaciente.dni.trim() : "";
+    if (dniTrimmed) {
+      if (!/^\d{7,8}$/.test(dniTrimmed)) {
+        errors.dni = "El DNI debe tener 7 u 8 números.";
+      } else if (pacientes.some(p => p.dni === dniTrimmed && p.id !== editingPaciente.id)) {
+        errors.dni = "Ya existe otro paciente con este DNI.";
+      }
+    }
+
+    if (editingPaciente.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editingPaciente.email.trim())) {
+      errors.email = "Correo electrónico inválido.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
+        method: "PUT",
+        headers: {
+          'Content-Type': "application/json",
+        },
+        body: JSON.stringify({
+          nombre: editingPaciente.nombre.trim(),
+          dni: dniTrimmed || undefined,
+          email: editingPaciente.email?.trim() || undefined,
+          telefono: editingPaciente.telefono?.trim() || undefined,
+          fechaNacimiento: editingPaciente.fechaNacimiento?.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Error al actualizar paciente');
+      }
+
+      const actualizado = await response.json();
+
+      setPacientes(prev => prev.map(p => p.id === actualizado.id ? actualizado : p));
+      setTurnos(prev => prev.map(t => t.pacienteId === actualizado.id ? { ...t, pacienteNombre: actualizado.nombre } : t));
+      setHistoriales(prev => prev.map(h => h.pacienteId === actualizado.id ? { ...h, pacienteNombre: actualizado.nombre } : h));
+
+      setShowEditPacienteModal(false);
+      setEditingPaciente(null);
+    } catch (error: any) {
+      console.error('Error updating patient:', error);
+      alert(error.message || 'No se pudo actualizar el paciente.');
+    }
+  };
 
   const handleEditClick = (turno: Turno) => {
     setSelectedTurnos([]);
@@ -332,8 +402,20 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 <div className="h-20 w-20 rounded-full bg-slate-800 border-2 border-emerald-900/50 flex items-center justify-center flex-shrink-0 shadow-inner">
                   <User className="h-10 w-10 text-emerald-500" />
                 </div>
-                <div className="min-w-0">
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
+                    <button 
+                      onClick={() => {
+                        setEditingPaciente(paciente);
+                        setShowEditPacienteModal(true);
+                      }}
+                      className="p-1.5 text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-xl transition flex items-center justify-center shrink-0"
+                      title="Editar Paciente"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </div>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm font-medium text-slate-400">
                     {paciente.telefono && <div className="flex items-center gap-1.5 font-bold text-emerald-400"><Phone className="h-4 w-4 text-emerald-500" /> {paciente.telefono}</div>}
                     {paciente.dni && <div className="flex items-center">DNI: {paciente.dni}</div>}
@@ -630,6 +712,120 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 {customConfirm.confirmText || 'Confirmar'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showEditPacienteModal && editingPaciente && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
+          <div className="bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-800">
+            <div className="px-6 py-5 bg-slate-950 border-b border-slate-850 flex justify-between items-center">
+              <span className="font-extrabold text-slate-100 text-lg">Editar Paciente</span>
+              <button 
+                onClick={() => {
+                  setShowEditPacienteModal(false);
+                  setEditingPaciente(null);
+                }} 
+                className="text-slate-400 p-1.5 hover:bg-slate-800 rounded-xl transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={async (e) => { setIsSubmitting(true); try { await handleUpdatePaciente(e); } finally { setIsSubmitting(false); } }} className="p-6 space-y-4" noValidate>
+              <div className="space-y-1.5">
+                <label className="text-xs text-slate-500 font-bold flex items-center gap-1 uppercase">
+                  Nombre Completo <span className="text-rose-500 font-black text-sm">*</span>
+                  <span className="text-[10px] text-slate-400 font-medium normal-case">(Obligatorio)</span>
+                </label>
+                <input 
+                  type="text"
+                  value={editingPaciente.nombre}
+                  onChange={(e) => {
+                    setEditingPaciente({ ...editingPaciente, nombre: e.target.value });
+                    if (formErrors.nombre) setFormErrors({ ...formErrors, nombre: undefined });
+                  }}
+                  className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:ring-4 transition ${formErrors.nombre ? 'border-rose-500 focus:ring-rose-500/10' : "border-slate-800 focus:ring-emerald-500/5 focus:bg-slate-900 focus:border-slate-700"}`}
+                  placeholder="Ej: Juan Pérez"
+                  autoFocus
+                />
+                {formErrors.nombre && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.nombre}</span>}
+              </div>
+
+              <div className="space-y-4 border-t border-slate-800 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-450 font-bold block uppercase">DNI</label>
+                    <input 
+                      type="text"
+                      value={editingPaciente.dni || ''}
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, dni: e.target.value.replace(/\D/g, '').slice(0, 8) });
+                        if (formErrors.dni) setFormErrors({ ...formErrors, dni: undefined });
+                      }}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.dni ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
+                      placeholder="Ej: 12345678"
+                    />
+                    {formErrors.dni && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.dni}</span>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-450 font-bold block uppercase">Teléfono</label>
+                    <input 
+                      type="text"
+                      value={editingPaciente.telefono || ''}
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, telefono: e.target.value.replace(/\D/g, '') });
+                      }}
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                      placeholder="Ej: 5493442XXXXXX"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-450 font-bold block uppercase">Correo</label>
+                    <input 
+                      type="email"
+                      value={editingPaciente.email || ''}
+                      onChange={(e) => {
+                        setEditingPaciente({ ...editingPaciente, email: e.target.value });
+                        if (formErrors.email) setFormErrors({ ...formErrors, email: undefined });
+                      }}
+                      className={`w-full pl-4 pr-10 py-3 border bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none transition ${formErrors.email ? 'border-rose-500' : "border-slate-800 focus:border-slate-700"}`}
+                      placeholder="Ej: juan@gmail.com"
+                    />
+                    {formErrors.email && <span className="text-rose-500 text-xs font-bold mt-1 block">{formErrors.email}</span>}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-slate-450 font-bold block uppercase">Fecha de Nacimiento</label>
+                    <input 
+                      type="date"
+                    onClick={(e) => (e.target as any).showPicker?.()}
+                      value={editingPaciente.fechaNacimiento || ''}
+                      onChange={(e) => setEditingPaciente({ ...editingPaciente, fechaNacimiento: e.target.value })}
+                      className="w-full pl-4 pr-10 py-3 border border-slate-800 bg-slate-950 text-white rounded-2xl text-sm font-semibold focus:outline-none focus:border-slate-700 transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowEditPacienteModal(false);
+                    setEditingPaciente(null);
+                  }} 
+                  className="px-5 py-3 text-sm font-bold text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-2xl transition"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-3 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-950/20 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? <><RefreshCw className="h-4 w-4 animate-spin" /> Guardando...</> : "Guardar Cambios"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

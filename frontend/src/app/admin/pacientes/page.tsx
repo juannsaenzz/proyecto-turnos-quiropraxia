@@ -103,7 +103,8 @@ export default function AdminDashboard() {
     pacientes, setPacientes, 
     turnos, setTurnos, 
     historiales, setHistoriales,
-    loading 
+    loading,
+    allConfigs
   } = useGlobalData();
   // Navigation & UI state
   const { setSidebarOpen } = useSidebar();
@@ -270,9 +271,21 @@ export default function AdminDashboard() {
   };
 
   const getTargetCityForAppointment = (dateStr: string, hourStr: string) => {
-    if (dateStr === currentDate && savedConfig) {
-      return savedConfig.ciudad;
+    const isMorning = hourStr ? parseInt(hourStr.split(':')[0], 10) < 13 : false;
+    const shiftKey = isMorning ? 'MANANA' : 'TARDE';
+    
+    const shiftConfig = allConfigs.find(c => c.fecha === `${dateStr}_${shiftKey}`);
+    if (shiftConfig && shiftConfig.ciudad) {
+      return shiftConfig.ciudad;
     }
+    
+    const legacyConfig = allConfigs.find(c => c.fecha === dateStr);
+    if (legacyConfig && legacyConfig.ciudad) {
+      if (!legacyConfig.bloque || legacyConfig.bloque === shiftKey) {
+        return legacyConfig.ciudad;
+      }
+    }
+    
     const defaults = getDefaultsForDate(dateStr, hourStr);
     return defaults.ciudad;
   };

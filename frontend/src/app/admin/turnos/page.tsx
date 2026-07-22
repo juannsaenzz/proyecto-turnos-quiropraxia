@@ -296,7 +296,21 @@ export default function AdminDashboard() {
   };
 
   const getTargetCityForAppointment = (dateStr: string, hourStr: string) => {
-    // For simplicity, we just use defaults for the month view since overrides are per shift
+    const isMorning = hourStr ? parseInt(hourStr.split(':')[0], 10) < 13 : false;
+    const shiftKey = isMorning ? 'MANANA' : 'TARDE';
+    
+    const shiftConfig = allConfigs.find(c => c.fecha === `${dateStr}_${shiftKey}`);
+    if (shiftConfig && shiftConfig.ciudad) {
+      return shiftConfig.ciudad;
+    }
+    
+    const legacyConfig = allConfigs.find(c => c.fecha === dateStr);
+    if (legacyConfig && legacyConfig.ciudad) {
+      if (!legacyConfig.bloque || legacyConfig.bloque === shiftKey) {
+        return legacyConfig.ciudad;
+      }
+    }
+    
     const defaults = getDefaultsForDate(dateStr, hourStr);
     return defaults.ciudad;
   };

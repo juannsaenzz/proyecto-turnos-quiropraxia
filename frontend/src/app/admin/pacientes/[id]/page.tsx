@@ -429,10 +429,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           </div>
           <button
             onClick={() => window.location.reload()}
-            className="p-2 sm:p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group shrink-0"
+            className="p-2.5 bg-slate-900 border border-slate-700 text-emerald-400 hover:text-white hover:bg-emerald-600 rounded-full shadow-lg transition group shrink-0"
             title="Actualizar datos"
           >
-            <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 group-hover:rotate-180 transition-transform duration-500" />
+            <RefreshCw className="h-4 w-4 group-hover:rotate-180 transition-transform duration-500" />
           </button>
         </div>
       </header>
@@ -457,7 +457,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-4 flex-wrap">
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-words">{paciente.nombre}</h2>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-100 tracking-tight break-all">{paciente.nombre}</h2>
                     <div className="flex gap-2">
                       <button 
                         onClick={() => {

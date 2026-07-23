@@ -26,7 +26,8 @@ import {
   AlertCircle,
   ArrowUp,
   RefreshCw,
-  Pencil
+  Pencil,
+  Check
 } from 'lucide-react';
 
 
@@ -101,6 +102,15 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     return () => target.removeEventListener('scroll', handleScroll as EventListener);
   }, []);
 
+  // Feedback Toast state
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
   // Hydration fix
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
@@ -162,6 +172,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
       setShowEditPacienteModal(false);
       setEditingPaciente(null);
+      showToast(`Datos de ${actualizado.nombre} actualizados exitosamente`);
     } catch (error: any) {
       console.error('Error updating patient:', error);
       alert(error.message || 'No se pudo actualizar el paciente.');
@@ -197,6 +208,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           t.id === id ? { ...t, notas: editNotas } : t
         ));
         setEditingTurno(null);
+        showToast(`Turno actualizado exitosamente para ${paciente?.nombre || 'el paciente'}`);
       } else {
         console.error("Failed to update turno");
       }
@@ -254,6 +266,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               setSelectedTurnos(prev => prev.filter(tId => tId !== id));
             }
             setCustomConfirm(null);
+            showToast(`Turno eliminado exitosamente para ${paciente?.nombre || 'el paciente'}`);
           } else {
             console.error("Failed to delete turno");
           }
@@ -402,6 +415,16 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   });
 
   return (
+    <>
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-slate-900/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-4 min-w-[280px] max-w-[90vw] text-center">
+          <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-inner">
+            <Check className="h-7 w-7 text-emerald-400 stroke-[3]" />
+          </div>
+          <span className="text-base font-bold text-slate-100 leading-snug break-words">{toastMessage}</span>
+        </div>
+      )}
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans relative">
       {/* Top Header */}
       <header className="h-auto xl:h-20 bg-slate-900 border-b border-slate-800/80 sticky top-0 z-30 px-6 xl:px-8 flex flex-col xl:flex-row items-start xl:items-center py-4 xl:py-0 gap-4 xl:gap-0 shadow-sm">
@@ -935,5 +958,6 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         <LoadingSpinner message="Actualizando estado..." />
       )}
     </div>
+    </>
   );
 }

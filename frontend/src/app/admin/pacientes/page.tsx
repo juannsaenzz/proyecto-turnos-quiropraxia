@@ -933,7 +933,7 @@ export default function AdminDashboard() {
           }
 
           setTurnos(prev => prev.filter(t => t.id !== id));
-          showToast('Turno eliminado con éxito');
+          showToast(`Turno eliminado exitosamente para ${appt ? appt.pacienteNombre : 'el paciente'}`);
         } catch (error: any) {
           console.error('Error deleting appointment:', error);
           alert(error.message || 'No se pudo eliminar el turno.');

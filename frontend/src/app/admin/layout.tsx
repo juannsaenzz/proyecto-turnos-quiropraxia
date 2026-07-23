@@ -89,7 +89,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                   href={item.path}
                   onClick={() => {
                     setSidebarOpen(false);
-                    document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+                    document.getElementById('main-scroll-container')?.scrollTo({ top: 0 });
                   }}
                   className={`
                     w-full flex items-center space-x-3.5 px-5 py-3 rounded-2xl text-sm font-bold transition duration-150
@@ -155,7 +155,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     <li>
                       <Link 
                         href="/admin/turnos" 
-                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' })}
+                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0 })}
                         className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
                       >
                         Agenda
@@ -164,7 +164,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                     <li>
                       <Link 
                         href="/admin/pacientes" 
-                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0, behavior: 'smooth' })}
+                        onClick={() => document.getElementById('main-scroll-container')?.scrollTo({ top: 0 })}
                         className="text-xs font-semibold text-slate-300 hover:text-emerald-400 transition-colors"
                       >
                         Pacientes

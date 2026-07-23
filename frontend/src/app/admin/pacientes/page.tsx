@@ -634,7 +634,7 @@ export default function AdminDashboard() {
       setTurnos(prev => prev.map(t => t.id === nuevoTurnoItem.id ? nuevoTurnoItem : t));
       setShowEditTurnoModal(false);
       setEditingTurno(null);
-      showToast(`Turno actualizado con éxito`);
+      showToast(`Turno actualizado exitosamente para ${nuevoTurnoItem.pacienteNombre}`);
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'No se pudo actualizar el turno.');
@@ -874,7 +874,7 @@ export default function AdminDashboard() {
 
       setShowEditPacienteModal(false);
       setEditingPaciente(null);
-      showToast(`Paciente ${actualizado.nombre} actualizado con éxito`);
+      showToast(`Datos de ${actualizado.nombre} actualizados exitosamente`);
     } catch (error: any) {
       console.error('Error updating patient:', error);
       alert(error.message || 'No se pudo actualizar el paciente.');

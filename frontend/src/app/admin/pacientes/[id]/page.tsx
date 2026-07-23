@@ -331,8 +331,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
           })));
           setTurnos(prev => prev.map(t => selectedTurnos.includes(t.id) ? { ...t, estado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail || undefined } : t));
+          const numUpdated = selectedTurnos.length;
           setSelectedTurnos([]);
           setCustomConfirm(null);
+          showToast(`${numUpdated} turnos cambiados a estado ${estado}`);
         } catch (error) {
           console.error("Error bulk updating", error);
         }
@@ -355,8 +357,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             method: 'DELETE'
           })));
           setTurnos(prev => prev.filter(t => !selectedTurnos.includes(t.id)));
+          const numDeleted = selectedTurnos.length;
           setSelectedTurnos([]);
           setCustomConfirm(null);
+          showToast(`${numDeleted} turnos eliminados exitosamente`);
         } catch (error) {
           console.error("Error bulk deleting", error);
         }

@@ -1164,7 +1164,7 @@ export default function AdminDashboard() {
             prevTurnos.map(t => selectedTurnos.includes(t.id) ? { ...t, estado: nuevoEstado, updatedAt: new Date().toISOString(), updatedBy: currentUserEmail } : t)
           );
           setSelectedTurnos([]);
-          showToast(`${selectedTurnos.length} turnos marcados como ${nuevoEstado}`);
+          showToast(`${selectedTurnos.length} turnos cambiados a estado ${nuevoEstado}`);
         } catch (err: any) {
           console.error(err);
           alert('Error al actualizar los turnos en lote');
@@ -1188,7 +1188,7 @@ export default function AdminDashboard() {
           
           setTurnos(prevTurnos => prevTurnos.filter(t => !selectedTurnos.includes(t.id)));
           setSelectedTurnos([]);
-          showToast(`${selectedTurnos.length} turnos eliminados con éxito`);
+          showToast(`${selectedTurnos.length} turnos eliminados exitosamente`);
         } catch (err: any) {
           console.error(err);
           alert('Error al eliminar los turnos en lote');

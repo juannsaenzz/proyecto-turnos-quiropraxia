@@ -4,6 +4,7 @@ import { TurnosModule } from './turnos/turnos.module';
 import { HistorialModule } from './historial/historial.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfiguracionDiaModule } from './configuracion-dia/configuracion-dia.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { ConfiguracionDiaModule } from './configuracion-dia/configuracion-dia.mo
     HistorialModule,
     ConfiguracionDiaModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

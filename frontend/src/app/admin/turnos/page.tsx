@@ -312,7 +312,11 @@ export default function AdminDashboard() {
     }
     
     const defaults = getDefaultsForDate(dateStr, hourStr);
-    return defaults.ciudad;
+    const expectedTurno = isMorning ? 'Mañana' : 'Tarde';
+    if (defaults.turno === expectedTurno || (defaults.turno as string) === 'Ambos turnos') {
+      return defaults.ciudad;
+    }
+    return 'Cerrado';
   };
 
   // Trigger auto-selection using already loaded configs when date changes
@@ -1817,8 +1821,8 @@ export default function AdminDashboard() {
                     <div>Mié</div>
                     <div>Jue</div>
                     <div>Vie</div>
-                    <div className="text-rose-400/80">Sáb</div>
-                    <div className="text-rose-400/80">Dom</div>
+                    <div>Sáb</div>
+                    <div>Dom</div>
                   </div>
 
                   {/* Grid cells */}
@@ -1828,8 +1832,8 @@ export default function AdminDashboard() {
                       return cells.map((cell, idx) => {
                         const dateTurnos = turnos.filter(t => t.fechaHora.split('T')[0] === cell.dateString);
                         
-                        const configManana = allConfigs.find(c => c.fecha === `${cell.dateString}_MANANA`)?.ciudad || getDefaultsForDate(cell.dateString, '09:00').ciudad;
-                        const configTarde = allConfigs.find(c => c.fecha === `${cell.dateString}_TARDE`)?.ciudad || getDefaultsForDate(cell.dateString, '16:00').ciudad;
+                        const configManana = getTargetCityForAppointment(cell.dateString, '09:00');
+                        const configTarde = getTargetCityForAppointment(cell.dateString, '16:00');
                         
                         const validCities = [configManana, configTarde].filter(c => c !== 'Cerrado');
                         const uniqueValid = Array.from(new Set(validCities));
@@ -1849,7 +1853,7 @@ export default function AdminDashboard() {
                               setCalendarViewMode('day');
                             }}
                             className={`min-h-[105px] p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none ${
-                              cell.isCurrentMonth ? (isWeekend ? 'bg-slate-900/60 text-slate-100' : 'bg-slate-900 text-slate-100') : "bg-slate-950/35 text-slate-600"
+                              cell.isCurrentMonth ? (isWeekend ? 'bg-slate-950/50 text-slate-300' : 'bg-slate-900 text-slate-100') : "bg-slate-950/35 text-slate-600"
                             } ${isSelected ? 'ring-2 ring-emerald-500 ring-inset z-10' : ""}`}
                           >
                             <div className="flex items-center justify-between">
@@ -1857,26 +1861,26 @@ export default function AdminDashboard() {
                                 cell.isToday 
                                   ? 'bg-emerald-600 text-white font-black' 
                                   : cell.isCurrentMonth 
-                                    ? (isWeekend ? 'text-rose-300/90' : 'text-slate-300') 
-                                    : (isWeekend ? 'text-rose-900/50' : "text-slate-600")
+                                    ? (isWeekend ? 'text-slate-400' : 'text-slate-300') 
+                                    : (isWeekend ? 'text-slate-700/50' : "text-slate-600")
                               }`}>
                                 {cell.dayNumber}
                               </span>
                             </div>
 
                             <div className="space-y-1 mt-2">
-                              <div className={`text-[10px] font-bold leading-tight break-words whitespace-normal ${
-                                cell.isCurrentMonth ? (isWeekend ? 'text-rose-200/80' : 'text-slate-200') : "text-slate-700"
+                              <div className={`text-[10px] font-bold leading-tight ${
+                                cell.isCurrentMonth ? (isWeekend ? 'text-slate-400' : 'text-slate-200') : "text-slate-700"
                               }`}>
                                 <span className="hidden sm:inline">{sucursalVal}</span>
-                                <span className="sm:hidden">
-                                  {sucursalVal
-                                    .replace('Rosario del Tala', 'Tala')
-                                    .replace('Gualeguay', 'Gual')
-                                    .replace('Galarza', 'Gal')
-                                    .replace('Cerrado', 'Cerr')
-                                    .replace(' y ', '/')
-                                  }
+                                <span className="sm:hidden block">
+                                  {sucursalVal === 'Cerrado' ? 'Cerrado' : (
+                                    sucursalVal.split(' y ').map((city, cityIdx) => (
+                                      <span key={cityIdx} className="block truncate">
+                                        {city.replace('Rosario del Tala', 'Tala').replace('Gualeguay', 'Gual').replace('Galarza', 'Gal')}
+                                      </span>
+                                    ))
+                                  )}
                                 </span>
                               </div>
 

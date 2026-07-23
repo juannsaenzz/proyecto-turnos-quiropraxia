@@ -287,7 +287,11 @@ export default function AdminDashboard() {
     }
     
     const defaults = getDefaultsForDate(dateStr, hourStr);
-    return defaults.ciudad;
+    const expectedTurno = isMorning ? 'Mañana' : 'Tarde';
+    if (defaults.turno === expectedTurno || (defaults.turno as string) === 'Ambos turnos') {
+      return defaults.ciudad;
+    }
+    return 'Cerrado';
   };
 
   // Trigger auto-selection and database lookup when date changes

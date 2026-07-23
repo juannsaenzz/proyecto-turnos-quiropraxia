@@ -17,11 +17,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+          request.cookies.set(name, value)
           supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,
@@ -31,14 +27,11 @@ export async function updateSession(request: NextRequest) {
             name,
             value,
             ...options,
+            maxAge: 60 * 60 * 24 * 365, // 1 year
           })
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
+          request.cookies.set(name, '')
           supabaseResponse = NextResponse.next({
             request: {
               headers: request.headers,

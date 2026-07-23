@@ -341,14 +341,23 @@ export default function AdminDashboard() {
 
     setSavedConfigs(newConfigs);
     
-    if (newConfigs[selectedShift]) {
+    const activeShifts = Object.keys(newConfigs).filter(s => newConfigs[s].ciudad !== 'Cerrado') as ("Mañana" | "Tarde")[];
+    
+    if (activeShifts.includes(selectedShift as "Mañana" | "Tarde")) {
       setSelectedCity(newConfigs[selectedShift].ciudad);
+    } else if (activeShifts.length > 0) {
+      setSelectedShift(activeShifts[0]);
+      setSelectedCity(newConfigs[activeShifts[0]].ciudad);
     } else {
+      // Check defaults if no active manual configs
       const defaults = getDefaultsForDate(currentDate);
-      // Default shift doesn't need to change if they are just loading, 
-      // but if they just landed on the date, update it:
-      setSelectedCity(defaults.ciudad);
-      setSelectedShift(defaults.turno);
+      if (defaults.turno === 'Ninguno' || (defaults.turno as string) === 'Ambos turnos') {
+        setSelectedCity('Cerrado');
+        setSelectedShift(selectedShift === 'Ninguno' ? 'Mañana' : selectedShift);
+      } else {
+        setSelectedCity(defaults.ciudad);
+        setSelectedShift(defaults.turno);
+      }
     }
   }, [currentDate, allConfigs]);
 

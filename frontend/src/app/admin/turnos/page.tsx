@@ -179,6 +179,7 @@ export default function AdminDashboard() {
         // Update selected shift based on time (Mañana < 15:00, Tarde >= 15:00)
         const hour = parseInt(timeParam.split(':')[0], 10);
         if (!isNaN(hour)) {
+          skipShiftOverrideRef.current = true;
           setSelectedShift(hour < 15 ? 'Mañana' : 'Tarde');
         }
         

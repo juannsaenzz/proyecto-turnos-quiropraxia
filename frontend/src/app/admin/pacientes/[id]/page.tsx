@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../../components/SidebarContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -239,6 +240,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         setTurnos(prev => prev.map(t => 
           t.id == id ? { ...t, estado: actualizado.estado, updatedAt: actualizado.updatedAt, updatedBy: actualizado.updatedBy } : t
         ));
+        showToast(`Turno cambiado a estado ${actualizado.estado}`);
       }
     } catch (error) {
       console.error("Error updating turno status", error);
@@ -631,6 +633,13 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                                 <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
                               )}
                             </div>
+                            <Link
+                              href={`/admin/turnos?date=${turno.fechaHora}`}
+                              className="p-1 md:p-1.5 text-emerald-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"
+                              title="Ver en agenda"
+                            >
+                              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            </Link>
                             <button
                               onClick={() => handleDeleteSingleTurno(turno.id)}
                               className="p-1 md:p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"

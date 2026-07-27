@@ -709,6 +709,7 @@ export default function AdminDashboard() {
           skipShiftOverrideRef.current = true;
           setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
           setCurrentDate(newTurno.fechaHora);
+          setSelectedCity('Cerrado');
           
           setTimeout(() => {
             const el = document.getElementById(`time-${newTurno.hora}`);
@@ -845,6 +846,7 @@ export default function AdminDashboard() {
           skipShiftOverrideRef.current = true;
           setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
           setCurrentDate(editingTurno.fechaHora);
+          setSelectedCity('Cerrado');
           
           setTimeout(() => {
             const el = document.getElementById(`time-${editingTurno.hora}`);

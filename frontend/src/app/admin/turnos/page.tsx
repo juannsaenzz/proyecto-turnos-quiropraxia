@@ -655,6 +655,33 @@ export default function AdminDashboard() {
     const p = pacientes.find(pat => pat.id === parseInt(newTurno.pacienteId));
     if (!p) return;
 
+    if (newTurno.ciudad === 'Cerrado') {
+      setCustomConfirm({
+        title: "Consultorio Cerrado",
+        message: "El consultorio se encuentra CERRADO en el horario seleccionado.",
+        confirmText: "Modificar",
+        cancelText: "Cancelar",
+        type: "danger",
+        onConfirm: async () => {
+          setCustomConfirm(null);
+          setShowNewTurnoModal(false);
+          setCurrentDate(newTurno.fechaHora);
+          const hr = parseInt(newTurno.hora.split(':')[0], 10);
+          setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
+          
+          setTimeout(() => {
+            const el = document.getElementById(`time-${newTurno.hora}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('bg-emerald-950/30');
+              setTimeout(() => el.classList.remove('bg-emerald-950/30'), 2000);
+            }
+          }, 500);
+        }
+      });
+      return;
+    }
+
     // Check if there is already active appointments in the same date, time, and city
     const conflictos = turnos.filter(t => 
       t.fechaHora === newTurno.fechaHora && 
@@ -762,6 +789,33 @@ export default function AdminDashboard() {
     
     const p = pacientes.find(pat => pat.id === parseInt(editingTurno.pacienteId.toString()));
     if (!p) return;
+
+    if (editingTurno.ciudad === 'Cerrado') {
+      setCustomConfirm({
+        title: "Consultorio Cerrado",
+        message: "El consultorio se encuentra CERRADO en el horario seleccionado.",
+        confirmText: "Modificar",
+        cancelText: "Cancelar",
+        type: "danger",
+        onConfirm: async () => {
+          setCustomConfirm(null);
+          setShowEditTurnoModal(false);
+          setCurrentDate(editingTurno.fechaHora);
+          const hr = parseInt(editingTurno.hora.split(':')[0], 10);
+          setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
+          
+          setTimeout(() => {
+            const el = document.getElementById(`time-${editingTurno.hora}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              el.classList.add('bg-emerald-950/30');
+              setTimeout(() => el.classList.remove('bg-emerald-950/30'), 2000);
+            }
+          }, 500);
+        }
+      });
+      return;
+    }
 
     // Check conflicts (exclude current appointment)
     const conflictos = turnos.filter(t => 

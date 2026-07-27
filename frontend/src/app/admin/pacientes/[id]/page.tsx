@@ -581,9 +581,18 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                             className="w-5 h-5 accent-emerald-500 rounded border-slate-700 cursor-pointer"
                           />
                         </div>
-                        <div className="bg-slate-950 rounded-xl px-5 py-4 border border-emerald-900/30 flex flex-col items-center justify-center w-[160px] flex-shrink-0 shadow-inner shadow-emerald-900/10">
-                          <span className="text-base font-bold text-emerald-500/80 leading-none mb-1.5">{formatDate(turno.fechaHora).split(', ')[0]}</span>
-                          <span className="text-xl font-black text-emerald-400 leading-none">{formatDate(turno.fechaHora).split(', ')[1]}</span>
+                        <div className="flex flex-col gap-2">
+                          <div className="bg-slate-950 rounded-xl px-5 py-4 border border-emerald-900/30 flex flex-col items-center justify-center w-[160px] flex-shrink-0 shadow-inner shadow-emerald-900/10">
+                            <span className="text-base font-bold text-emerald-500/80 leading-none mb-1.5">{formatDate(turno.fechaHora).split(', ')[0]}</span>
+                            <span className="text-xl font-black text-emerald-400 leading-none">{formatDate(turno.fechaHora).split(', ')[1]}</span>
+                          </div>
+                          <Link
+                            href={`/admin/turnos?date=${turno.fechaHora}`}
+                            className="w-[160px] py-1.5 text-emerald-400/80 hover:text-emerald-400 hover:bg-emerald-950/40 bg-slate-950/50 border border-emerald-900/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold"
+                          >
+                            <Calendar className="h-3 w-3" />
+                            Ver en agenda
+                          </Link>
                         </div>
                         <div className="flex flex-col justify-center">
                           <div className="font-bold text-slate-200 text-xl flex items-center gap-2">
@@ -633,13 +642,6 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                                 <ChevronDown className="absolute right-2 h-3 w-3 pointer-events-none opacity-70" />
                               )}
                             </div>
-                            <Link
-                              href={`/admin/turnos?date=${turno.fechaHora}`}
-                              className="p-1 md:p-1.5 text-emerald-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"
-                              title="Ver en agenda"
-                            >
-                              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                            </Link>
                             <button
                               onClick={() => handleDeleteSingleTurno(turno.id)}
                               className="p-1 md:p-1.5 text-rose-450 hover:bg-slate-800 hover:text-white hover:border-slate-700 bg-slate-950/40 border border-slate-850/60 rounded-lg transition flex items-center justify-center"

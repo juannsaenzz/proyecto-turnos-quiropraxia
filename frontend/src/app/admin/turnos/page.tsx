@@ -156,6 +156,7 @@ export default function AdminDashboard() {
   const [currentDate, setCurrentDate] = useState<string>(getTodayFormatted()); // Default date
   const [selectedCity, setSelectedCity] = useState<string>('Maciá');
   const [selectedShift, setSelectedShift] = useState<'Mañana' | 'Tarde' | 'Ninguno'>('Tarde');
+  const skipShiftOverrideRef = useRef(false);
   const [savedConfigs, setSavedConfigs] = useState<Record<string, { ciudad: string; bloque: string }>>({});
   const [isEditingConfig, setIsEditingConfig] = useState(false);
   const [tempCity, setTempCity] = useState<string>('Maciá');
@@ -370,7 +371,34 @@ export default function AdminDashboard() {
     
     const activeShifts = Object.keys(newConfigs).filter(s => newConfigs[s].ciudad !== 'Cerrado') as ("Mañana" | "Tarde")[];
     
-    if (activeShifts.includes(selectedShift as "Mañana" | "Tarde")) {
+    if (skipShiftOverrideRef.current) {
+      skipShiftOverrideRef.current = false;
+      // We are navigating here intentionally to a specific shift, do not override
+      const shiftConfig = newConfigs[selectedShift as "Mañana" | "Tarde"];
+      if (shiftConfig) {
+        setSelectedCity(shiftConfig.ciudad);
+      } else {
+        // Find default city for this specific shift on this day
+        const dateParts = currentDate.split('-');
+        const dateObj = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10));
+        const day = dateObj.getDay();
+        let defaultCity = "Cerrado";
+        
+        switch (day) {
+          case 1: case 3: case 4:
+            if (selectedShift === 'Tarde') defaultCity = "Rosario del Tala";
+            break;
+          case 2:
+            if (selectedShift === 'Tarde') defaultCity = "Maciá";
+            break;
+          case 5:
+            if (selectedShift === 'Mañana') defaultCity = "Gualeguay";
+            if (selectedShift === 'Tarde') defaultCity = "Galarza";
+            break;
+        }
+        setSelectedCity(defaultCity);
+      }
+    } else if (activeShifts.includes(selectedShift as "Mañana" | "Tarde")) {
       setSelectedCity(newConfigs[selectedShift].ciudad);
     } else if (activeShifts.length > 0) {
       setSelectedShift(activeShifts[0]);
@@ -672,13 +700,14 @@ export default function AdminDashboard() {
         message: "El consultorio se encuentra CERRADO en el horario seleccionado.",
         confirmText: "Modificar",
         cancelText: "Cancelar",
-        type: "danger",
+        type: "warning",
         onConfirm: async () => {
           setCustomConfirm(null);
           setShowNewTurnoModal(false);
-          setCurrentDate(newTurno.fechaHora);
           const hr = parseInt(newTurno.hora.split(':')[0], 10);
+          skipShiftOverrideRef.current = true;
           setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
+          setCurrentDate(newTurno.fechaHora);
           
           setTimeout(() => {
             const el = document.getElementById(`time-${newTurno.hora}`);
@@ -807,13 +836,14 @@ export default function AdminDashboard() {
         message: "El consultorio se encuentra CERRADO en el horario seleccionado.",
         confirmText: "Modificar",
         cancelText: "Cancelar",
-        type: "danger",
+        type: "warning",
         onConfirm: async () => {
           setCustomConfirm(null);
           setShowEditTurnoModal(false);
-          setCurrentDate(editingTurno.fechaHora);
           const hr = parseInt(editingTurno.hora.split(':')[0], 10);
+          skipShiftOverrideRef.current = true;
           setSelectedShift(hr < 15 ? 'Mañana' : 'Tarde');
+          setCurrentDate(editingTurno.fechaHora);
           
           setTimeout(() => {
             const el = document.getElementById(`time-${editingTurno.hora}`);

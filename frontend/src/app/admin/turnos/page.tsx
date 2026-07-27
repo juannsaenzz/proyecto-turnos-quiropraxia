@@ -377,13 +377,24 @@ export default function AdminDashboard() {
       setSelectedCity(newConfigs[activeShifts[0]].ciudad);
     } else {
       // Check defaults if no active manual configs
-      const defaults = getDefaultsForDate(currentDate);
-      if (defaults.turno === 'Ninguno' || (defaults.turno as string) === 'Ambos turnos') {
-        setSelectedCity('Cerrado');
-        setSelectedShift(selectedShift === 'Ninguno' ? 'Mañana' : selectedShift);
+      const dateParts = currentDate.split('-');
+      const dateObj = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10));
+      const day = dateObj.getDay();
+
+      if (day === 5) {
+        // Viernes supports both shifts
+        const shiftToUse = (selectedShift === 'Ninguno' ? 'Mañana' : selectedShift) as "Mañana" | "Tarde";
+        setSelectedShift(shiftToUse);
+        setSelectedCity(shiftToUse === 'Mañana' ? 'Gualeguay' : 'Galarza');
       } else {
-        setSelectedCity(defaults.ciudad);
-        setSelectedShift(defaults.turno);
+        const defaults = getDefaultsForDate(currentDate);
+        if (defaults.turno === 'Ninguno' || (defaults.turno as string) === 'Ambos turnos') {
+          setSelectedCity('Cerrado');
+          setSelectedShift(selectedShift === 'Ninguno' ? 'Mañana' : selectedShift);
+        } else {
+          setSelectedCity(defaults.ciudad);
+          setSelectedShift(defaults.turno);
+        }
       }
     }
   }, [currentDate, allConfigs]);

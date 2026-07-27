@@ -175,6 +175,12 @@ export default function AdminDashboard() {
       
       const timeParam = urlParams.get('time');
       if (timeParam) {
+        // Update selected shift based on time (Mañana < 15:00, Tarde >= 15:00)
+        const hour = parseInt(timeParam.split(':')[0], 10);
+        if (!isNaN(hour)) {
+          setSelectedShift(hour < 15 ? 'Mañana' : 'Tarde');
+        }
+        
         // Wait for render
         setTimeout(() => {
           const el = document.getElementById(`time-${timeParam}`);

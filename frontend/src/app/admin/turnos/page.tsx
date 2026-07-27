@@ -172,6 +172,20 @@ export default function AdminDashboard() {
       if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
         setCurrentDate(dateParam);
       }
+      
+      const timeParam = urlParams.get('time');
+      if (timeParam) {
+        // Wait for render
+        setTimeout(() => {
+          const el = document.getElementById(`time-${timeParam}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a brief highlight effect
+            el.classList.add('bg-emerald-950/30');
+            setTimeout(() => el.classList.remove('bg-emerald-950/30'), 2000);
+          }
+        }, 500);
+      }
     }
   }, []);
   
@@ -1671,7 +1685,7 @@ export default function AdminDashboard() {
                         }
                         
                         return (
-                          <div key={time} className="relative flex min-h-[70px] group transition hover:bg-slate-950/40">
+                          <div id={`time-${time}`} key={time} className="relative flex min-h-[70px] group transition-colors duration-500 hover:bg-slate-950/40">
                             {/* Current Time Line */}
                             {showTimeline && (
                               <div 

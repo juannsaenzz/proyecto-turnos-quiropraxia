@@ -587,10 +587,9 @@ export default function HistorialPacientePage({ params }: { params: { id: string
                             <span className="text-xl font-black text-emerald-400 leading-none">{formatDate(turno.fechaHora).split(', ')[1]}</span>
                           </div>
                           <Link
-                            href={`/admin/turnos?date=${turno.fechaHora}`}
-                            className="w-[160px] py-1.5 text-emerald-400/80 hover:text-emerald-400 hover:bg-emerald-950/40 bg-slate-950/50 border border-emerald-900/20 rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs font-semibold"
+                            href={`/admin/turnos?date=${turno.fechaHora}&time=${turno.hora}`}
+                            className="w-[160px] py-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/50 bg-slate-950/60 border border-emerald-900/30 rounded-xl transition-all flex items-center justify-center font-bold shadow-sm"
                           >
-                            <Calendar className="h-3 w-3" />
                             Ver en agenda
                           </Link>
                         </div>

@@ -1677,7 +1677,7 @@ export default function AdminDashboard() {
                             )}
 
                             {/* Time Column */}
-                            <div className="w-24 sm:w-28 px-4 py-4.5 border-r border-slate-800 flex-shrink-0 flex items-center justify-end font-bold text-slate-400 text-sm">
+                            <div className="w-24 sm:w-28 px-4 py-4.5 border-r border-slate-800 flex-shrink-0 flex items-center justify-end font-bold text-slate-200 text-[15px] tracking-wide">
                               {time}
                             </div>
 

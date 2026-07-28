@@ -1986,12 +1986,12 @@ export default function AdminDashboard() {
                               setCurrentDate(cell.dateString);
                               setCalendarViewMode('day');
                             }}
-                            className={`min-h-[105px] p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none ${
+                            className={`min-h-[90px] sm:min-h-[105px] p-1 sm:p-2 md:p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none overflow-hidden ${
                               cell.isCurrentMonth ? (isWeekend ? 'bg-slate-950/50 text-slate-300' : 'bg-slate-900 text-slate-100') : "bg-slate-950/35 text-slate-600"
                             } ${isSelected ? 'ring-2 ring-emerald-500 ring-inset z-10' : ""}`}
                           >
                             <div className="flex items-center justify-between">
-                              <span className={`text-xs font-black px-2 py-0.5 rounded-lg ${
+                              <span className={`text-[10px] sm:text-xs font-black px-1 sm:px-2 py-0.5 rounded-lg ${
                                 cell.isToday 
                                   ? 'bg-emerald-600 text-white font-black' 
                                   : cell.isCurrentMonth 
@@ -2002,15 +2002,17 @@ export default function AdminDashboard() {
                               </span>
                             </div>
 
-                            <div className="space-y-1 mt-2">
-                              <div className={`text-[10px] font-bold leading-tight ${
+                            <div className="space-y-1 mt-1 sm:mt-2 w-full">
+                              <div className={`text-[9px] sm:text-[10px] font-bold leading-tight w-full ${
                                 cell.isCurrentMonth ? (isWeekend ? 'text-slate-400' : 'text-slate-200') : "text-slate-700"
                               }`}>
-                                <span className="hidden sm:inline">{sucursalVal}</span>
-                                <span className="sm:hidden block">
-                                  {sucursalVal === 'Cerrado' ? 'Cerrado' : (
+                                <span className="hidden sm:inline truncate w-full block">{sucursalVal}</span>
+                                <span className="sm:hidden block w-full">
+                                  {sucursalVal === 'Cerrado' ? (
+                                    <span className="block truncate w-full text-center">Cerrado</span>
+                                  ) : (
                                     sucursalVal.split(' y ').map((city, cityIdx) => (
-                                      <span key={cityIdx} className="block truncate">
+                                      <span key={cityIdx} className="block truncate w-full text-center">
                                         {city.replace('Rosario del Tala', 'Tala').replace('Gualeguay', 'Gual').replace('Galarza', 'Gal')}
                                       </span>
                                     ))

@@ -477,7 +477,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               <Image src={errorImg} alt="Error" width={96} height={96} className="object-contain w-full h-full" />
             </div>
             <h2 className="text-2xl font-bold text-slate-400">Paciente no encontrado</h2>
-            <button onClick={() => router.back()} className="mt-6 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition shadow-lg">Volver a Pacientes</button>
+            <button onClick={() => router.push('/admin/turnos')} className="mt-6 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition shadow-lg">Volver</button>
           </div>
         ) : (
           <div className="space-y-8">

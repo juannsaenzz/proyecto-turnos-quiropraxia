@@ -793,7 +793,7 @@ export default function AdminDashboard() {
 
       setPacientes(prev => [...prev, creado]);
       setShowNewPacienteModal(false);
-      showToast(`Paciente ${creado.nombre} registrado con éxito`);
+      showToast(`Paciente ${creado.nombre} registrado exitosamente`);
       
       if (showNewTurnoModal) {
         setNewTurno(prev => ({ ...prev, pacienteId: creado.id.toString() }));
@@ -904,7 +904,7 @@ export default function AdminDashboard() {
           setTurnos(prev => prev.filter(t => t.pacienteId !== id));
           setHistoriales(prev => prev.filter(h => h.pacienteId !== id));
 
-          showToast(`Paciente "${nombre}" eliminado con éxito`);
+          showToast(`Paciente "${nombre}" eliminado exitosamente`);
         } catch (error: any) {
           console.error('Error deleting patient:', error);
           alert(error.message || 'No se pudo eliminar el paciente.');

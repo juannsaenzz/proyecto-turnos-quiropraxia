@@ -304,7 +304,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           setTurnos(prev => prev.filter(t => t.pacienteId !== paciente.id));
           setHistoriales(prev => prev.filter(h => h.pacienteId !== paciente.id));
 
-          router.push('/admin/pacientes');
+          showToast(`Paciente "${paciente.nombre}" eliminado exitosamente`);
+          setTimeout(() => {
+            router.push('/admin/pacientes');
+          }, 1500);
         } catch (error: any) {
           console.error('Error deleting patient:', error);
           alert(error.message || 'No se pudo eliminar el paciente.');

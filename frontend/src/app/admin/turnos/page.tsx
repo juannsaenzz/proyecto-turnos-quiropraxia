@@ -1986,7 +1986,7 @@ export default function AdminDashboard() {
                               setCurrentDate(cell.dateString);
                               setCalendarViewMode('day');
                             }}
-                            className={`min-h-[90px] sm:min-h-[105px] p-1 sm:p-2 md:p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none overflow-hidden ${
+                            className={`min-w-0 min-h-[90px] sm:min-h-[105px] p-1 sm:p-2 md:p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none overflow-hidden ${
                               cell.isCurrentMonth ? (isWeekend ? 'bg-slate-950/50 text-slate-300' : 'bg-slate-900 text-slate-100') : "bg-slate-950/35 text-slate-600"
                             } ${isSelected ? 'ring-2 ring-emerald-500 ring-inset z-10' : ""}`}
                           >
@@ -2002,17 +2002,17 @@ export default function AdminDashboard() {
                               </span>
                             </div>
 
-                            <div className="space-y-1 mt-1 sm:mt-2 w-full">
-                              <div className={`text-[9px] sm:text-[10px] font-bold leading-tight w-full ${
+                            <div className="space-y-1 mt-1 sm:mt-2 w-full overflow-hidden">
+                              <div className={`text-[8.5px] sm:text-[10px] tracking-tighter sm:tracking-normal font-bold leading-tight w-full ${
                                 cell.isCurrentMonth ? (isWeekend ? 'text-slate-400' : 'text-slate-200') : "text-slate-700"
                               }`}>
                                 <span className="hidden sm:block truncate w-full">{sucursalVal}</span>
-                                <span className="sm:hidden block w-full">
+                                <span className="sm:hidden flex flex-col w-full overflow-hidden">
                                   {sucursalVal === 'Cerrado' ? (
-                                    <span className="block truncate w-full text-center">Cerrado</span>
+                                    <span className="truncate w-full">Cerrado</span>
                                   ) : (
                                     sucursalVal.split(' y ').map((city, cityIdx) => (
-                                      <span key={cityIdx} className="block truncate w-full text-center">
+                                      <span key={cityIdx} className="truncate w-full">
                                         {city.replace('Rosario del Tala', 'Tala')}
                                       </span>
                                     ))

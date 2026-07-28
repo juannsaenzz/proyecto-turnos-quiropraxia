@@ -428,7 +428,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       {toastMessage && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-slate-900/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-4 min-w-[280px] max-w-[90vw] text-center">
           <div className="w-16 h-16 flex-shrink-0">
-            <Image src={confirmationImg} alt="Éxito" width={64} height={64} className="object-cover w-full h-full" />
+            <Image src={confirmationImg} alt="Éxito" width={64} height={64} className="object-contain w-full h-full" />
           </div>
           <span className="text-base font-bold text-slate-100 leading-snug break-words">{toastMessage}</span>
         </div>
@@ -474,7 +474,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         ) : !paciente ? (
           <div className="text-center py-20 flex flex-col items-center">
             <div className="w-24 h-24 mb-6 flex-shrink-0">
-              <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
+              <Image src={errorImg} alt="Error" width={96} height={96} className="object-contain w-full h-full" />
             </div>
             <h2 className="text-2xl font-bold text-slate-400">Paciente no encontrado</h2>
             <button onClick={() => router.back()} className="mt-6 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition shadow-lg">Volver a Pacientes</button>

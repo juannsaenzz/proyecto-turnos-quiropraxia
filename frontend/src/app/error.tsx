@@ -26,7 +26,7 @@ export default function GlobalError({
 
       <div className="w-full max-w-md relative z-10 text-center flex flex-col items-center">
         <div className="w-24 h-24 mb-6 flex-shrink-0">
-          <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
+          <Image src={errorImg} alt="Error" width={96} height={96} className="object-contain w-full h-full" />
         </div>
         
         <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight mb-4">

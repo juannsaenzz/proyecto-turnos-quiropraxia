@@ -10,6 +10,7 @@ import { useGlobalData, Paciente, Turno } from '../../components/GlobalDataConte
 import Image from 'next/image';
 import logo from '@/assets/2.png';
 import confirmationImg from '@/assets/confirmation.jpg';
+import errorImg from '@/assets/error.jpg';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -471,9 +472,12 @@ export default function HistorialPacientePage({ params }: { params: { id: string
         {loading ? (
           <LoadingSpinner />
         ) : !paciente ? (
-          <div className="text-center py-20">
+          <div className="text-center py-20 flex flex-col items-center">
+            <div className="w-24 h-24 mb-6 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+              <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
+            </div>
             <h2 className="text-2xl font-bold text-slate-400">Paciente no encontrado</h2>
-            <button onClick={() => router.back()} className="mt-4 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition">Volver a Pacientes</button>
+            <button onClick={() => router.back()} className="mt-6 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-500 transition shadow-lg">Volver a Pacientes</button>
           </div>
         ) : (
           <div className="space-y-8">

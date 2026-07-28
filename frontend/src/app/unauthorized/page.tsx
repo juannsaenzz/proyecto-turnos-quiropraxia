@@ -5,6 +5,7 @@ import { ShieldX, LogOut, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import logo from '@/assets/1.png';
+import errorImg from '@/assets/error.jpg';
 import React, { useState } from 'react';
 
 export default function UnauthorizedPage() {
@@ -28,7 +29,7 @@ export default function UnauthorizedPage() {
 
       <div className="w-full max-w-md relative z-10 text-center">
         <div className="inline-flex items-center justify-center bg-slate-900 border border-slate-800 rounded-3xl mb-6 shadow-2xl shadow-rose-900/20 overflow-hidden w-24 h-24">
-          <Image src={logo} alt="Logo" width={96} height={96} className="object-cover w-full h-full" />
+          <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
         </div>
         
         <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight mb-4">

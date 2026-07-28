@@ -2006,7 +2006,7 @@ export default function AdminDashboard() {
                               <div className={`text-[9px] sm:text-[10px] font-bold leading-tight w-full ${
                                 cell.isCurrentMonth ? (isWeekend ? 'text-slate-400' : 'text-slate-200') : "text-slate-700"
                               }`}>
-                                <span className="hidden sm:inline truncate w-full block">{sucursalVal}</span>
+                                <span className="hidden sm:block truncate w-full">{sucursalVal}</span>
                                 <span className="sm:hidden block w-full">
                                   {sucursalVal === 'Cerrado' ? (
                                     <span className="block truncate w-full text-center">Cerrado</span>

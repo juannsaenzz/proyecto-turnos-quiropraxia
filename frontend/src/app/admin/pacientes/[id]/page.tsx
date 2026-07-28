@@ -285,7 +285,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     if (!paciente) return;
     setCustomConfirm({
       title: "Eliminar Paciente",
-      message: `¿Estás seguro de que deseas eliminar al paciente "${paciente.nombre}"? Esta acción borrará de forma permanente todos sus turnos y su historial de turnos.`,
+      message: `¿Estás seguro de que deseas eliminar al paciente ${paciente.nombre}? Esta acción borrará de forma permanente todos sus turnos y su historial de turnos.`,
       confirmText: "Sí, eliminar",
       cancelText: "Cancelar",
       type: "danger",

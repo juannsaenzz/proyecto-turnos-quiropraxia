@@ -28,7 +28,7 @@ export default function UnauthorizedPage() {
       </div>
 
       <div className="w-full max-w-md relative z-10 text-center">
-        <div className="inline-flex items-center justify-center bg-slate-900 border border-slate-800 rounded-3xl mb-6 shadow-2xl shadow-rose-900/20 overflow-hidden w-24 h-24">
+        <div className="inline-flex items-center justify-center mb-6 w-24 h-24 flex-shrink-0">
           <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
         </div>
         

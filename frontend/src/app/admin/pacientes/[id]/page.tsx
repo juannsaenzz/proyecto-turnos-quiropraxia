@@ -473,7 +473,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           <LoadingSpinner />
         ) : !paciente ? (
           <div className="text-center py-20 flex flex-col items-center">
-            <div className="w-24 h-24 mb-6 rounded-3xl overflow-hidden shadow-2xl border border-slate-800">
+            <div className="w-24 h-24 mb-6 flex-shrink-0">
               <Image src={errorImg} alt="Error" width={96} height={96} className="object-cover w-full h-full" />
             </div>
             <h2 className="text-2xl font-bold text-slate-400">Paciente no encontrado</h2>

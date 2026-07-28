@@ -9,6 +9,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import { useGlobalData, Paciente, Turno } from '../../components/GlobalDataContext';
 import Image from 'next/image';
 import logo from '@/assets/2.png';
+import confirmationImg from '@/assets/confirmation.jpg';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -425,8 +426,8 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-slate-900/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-4 min-w-[280px] max-w-[90vw] text-center">
-          <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-inner">
-            <Check className="h-7 w-7 text-emerald-400 stroke-[3]" />
+          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 shadow-lg border-2 border-emerald-500/30 bg-slate-800">
+            <Image src={confirmationImg} alt="Éxito" width={64} height={64} className="object-cover w-full h-full" />
           </div>
           <span className="text-base font-bold text-slate-100 leading-snug break-words">{toastMessage}</span>
         </div>

@@ -1514,7 +1514,7 @@ export default function AdminDashboard() {
                     onClick={(e) => (e.target as any).showPicker?.()}
                   value={currentDate}
                   onChange={(e) => setCurrentDate(e.target.value)}
-                  className="px-3.5 py-2 border border-slate-800 bg-slate-950 rounded-xl text-sm font-extrabold focus:outline-none focus:border-emerald-500 text-white cursor-pointer"
+                  className="px-3.5 py-2 border border-slate-800 bg-slate-950 rounded-xl text-sm font-extrabold focus:outline-none focus:border-emerald-500 text-white cursor-pointer [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:opacity-0"
                 />
 
                 <button 

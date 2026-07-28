@@ -1985,6 +1985,12 @@ export default function AdminDashboard() {
                             onClick={() => {
                               setCurrentDate(cell.dateString);
                               setCalendarViewMode('day');
+                              const scrollContainer = document.getElementById('main-scroll-container');
+                              if (scrollContainer) {
+                                scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+                              } else {
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }
                             }}
                             className={`min-w-0 min-h-[90px] sm:min-h-[105px] p-1 sm:p-2 md:p-3 flex flex-col justify-between hover:bg-slate-800/50 transition cursor-pointer select-none overflow-hidden ${
                               cell.isCurrentMonth ? (isWeekend ? 'bg-slate-950/50 text-slate-300' : 'bg-slate-900 text-slate-100') : "bg-slate-950/35 text-slate-600"

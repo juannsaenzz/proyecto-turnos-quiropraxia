@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import loadingImg from '@/assets/loading.png';
+import loadingImg from '@/assets/loading.jpg';
 
 export default function SpineLoadingIcon({ className = "h-16 w-16 animate-bounce" }: { className?: string }) {
   return (

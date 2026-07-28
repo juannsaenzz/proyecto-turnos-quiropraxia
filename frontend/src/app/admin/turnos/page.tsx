@@ -195,6 +195,11 @@ export default function AdminDashboard() {
           }
         }, 500);
       }
+      
+      if (dateParam || timeParam) {
+        // Remove query parameters from the URL so a subsequent refresh doesn't reload them
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
   }, []);
   

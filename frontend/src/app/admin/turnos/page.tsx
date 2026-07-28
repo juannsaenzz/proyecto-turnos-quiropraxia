@@ -2013,7 +2013,7 @@ export default function AdminDashboard() {
                                   ) : (
                                     sucursalVal.split(' y ').map((city, cityIdx) => (
                                       <span key={cityIdx} className="block truncate w-full text-center">
-                                        {city.replace('Rosario del Tala', 'Tala').replace('Gualeguay', 'Gual').replace('Galarza', 'Gal')}
+                                        {city.replace('Rosario del Tala', 'Tala')}
                                       </span>
                                     ))
                                   )}

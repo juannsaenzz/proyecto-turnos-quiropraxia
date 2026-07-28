@@ -31,7 +31,7 @@ function AuthCallbackContent() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-      <SpineLoadingIcon className="h-12 w-12 text-emerald-500 animate-bounce mb-8" />
+      <SpineLoadingIcon className="h-16 w-16 text-emerald-500 animate-bounce mb-8" />
       <div className="text-center"></div>
     </div>
   );
@@ -41,7 +41,7 @@ export default function AuthCallbackPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <SpineLoadingIcon className="h-12 w-12 text-emerald-500 animate-bounce" />
+        <SpineLoadingIcon className="h-16 w-16 text-emerald-500 animate-bounce" />
       </div>
     }>
       <AuthCallbackContent />

@@ -1148,7 +1148,7 @@ export default function AdminDashboard() {
           setTurnos(prev => prev.filter(t => t.pacienteId !== id));
           setHistoriales(prev => prev.filter(h => h.pacienteId !== id));
 
-          showToast(`Paciente "${nombre}" eliminado exitosamente`);
+          showToast(`Paciente ${nombre} eliminado exitosamente`);
         } catch (error: any) {
           console.error('Error deleting patient:', error);
           alert(error.message || 'No se pudo eliminar el paciente.');

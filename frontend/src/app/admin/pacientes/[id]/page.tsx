@@ -304,7 +304,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
           setTurnos(prev => prev.filter(t => t.pacienteId !== paciente.id));
           setHistoriales(prev => prev.filter(h => h.pacienteId !== paciente.id));
 
-          showToast(`Paciente "${paciente.nombre}" eliminado exitosamente`);
+          showToast(`Paciente ${paciente.nombre} eliminado exitosamente`);
           setTimeout(() => {
             router.push('/admin/pacientes');
           }, 1500);

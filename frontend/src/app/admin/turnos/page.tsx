@@ -1389,7 +1389,7 @@ export default function AdminDashboard() {
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100] bg-slate-900/95 backdrop-blur-xl px-8 py-6 rounded-3xl shadow-2xl border border-slate-700/50 flex flex-col items-center justify-center space-y-4 min-w-[280px] max-w-[90vw] text-center">
-          <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 shadow-lg border-2 border-emerald-500/30 bg-slate-800">
+          <div className="w-16 h-16 flex-shrink-0">
             <Image src={confirmationImg} alt="Éxito" width={64} height={64} className="object-cover w-full h-full" />
           </div>
           <span className="text-base font-bold text-slate-100 leading-snug break-words">{toastMessage}</span>

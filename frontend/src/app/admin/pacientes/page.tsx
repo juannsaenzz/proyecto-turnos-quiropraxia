@@ -272,7 +272,11 @@ export default function AdminDashboard() {
   };
 
   const getTargetCityForAppointment = (dateStr: string, hourStr: string) => {
-    const isMorning = hourStr ? parseInt(hourStr.split(':')[0], 10) < 13 : false;
+    if (!hourStr || !dateStr) return 'Cerrado';
+    const dateObj = new Date(dateStr + "T00:00:00");
+    const isFriday = dateObj.getDay() === 5;
+    const shiftCutoff = isFriday ? 16 : 15;
+    const isMorning = parseInt(hourStr.split(':')[0], 10) < shiftCutoff;
     const shiftKey = isMorning ? 'MANANA' : 'TARDE';
     
     const shiftConfig = allConfigs.find(c => c.fecha === `${dateStr}_${shiftKey}`);

@@ -387,6 +387,16 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     }
   };
 
+  const getCardStyles = (estado: string) => {
+    switch (estado) {
+      case 'PENDIENTE': return 'bg-slate-900 border-2 border-blue-500/40 hover:border-blue-500/70';
+      case 'CONFIRMADO': return 'bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500/70';
+      case 'ATENDIDO': return 'bg-slate-900 border-2 border-purple-500/40 hover:border-purple-500/70';
+      case 'AUSENTE': return 'bg-slate-900 border-2 border-rose-500/40 hover:border-rose-500/70';
+      default: return 'bg-slate-900 border-2 border-slate-800 hover:border-slate-700';
+    }
+  };
+
   const getEstadoLabel = (estado: string) => {
     switch (estado) {
       case 'ATENDIDO': return 'ATENDIDO';
@@ -577,7 +587,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               ) : (
                 <div className="space-y-4">
                   {processedTurnos.slice(0, visibleTurnosCount).map((turno) => (
-                    <div key={turno.id} className={`group border rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50' : 'bg-slate-900 border-slate-800 hover:border-slate-700 hover:shadow-md'}`}>
+                    <div key={turno.id} className={`group rounded-2xl p-5 transition shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 ${selectedTurnos.includes(turno.id) ? 'ring-2 ring-emerald-500 bg-emerald-950/20 border-emerald-500/50 border-2' : getCardStyles(turno.estado)}`}>
                       
                       {/* Left: Checkbox, Date & Time */}
                       <div className="flex items-center gap-5 md:w-1/3">
@@ -737,11 +747,11 @@ export default function HistorialPacientePage({ params }: { params: { id: string
               <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
                 Pendientes
               </button>
-              <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-purple-950/50 text-purple-300 border border-purple-500/20 rounded-xl text-xs font-bold hover:bg-purple-900/40 hover:border-purple-500/40 transition whitespace-nowrap">
-                Atendidos
-              </button>
               <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
                 Confirmados
+              </button>
+              <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-purple-950/50 text-purple-300 border border-purple-500/20 rounded-xl text-xs font-bold hover:bg-purple-900/40 hover:border-purple-500/40 transition whitespace-nowrap">
+                Atendidos
               </button>
               <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
                 Ausentes

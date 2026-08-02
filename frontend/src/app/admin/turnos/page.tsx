@@ -406,11 +406,12 @@ export default function AdminDashboard() {
         }
         setSelectedCity(defaultCity);
       }
-    } else if (activeShifts.includes(selectedShift as "Mañana" | "Tarde")) {
-      setSelectedCity(newConfigs[selectedShift].ciudad);
-    } else if (activeShifts.length > 0) {
-      setSelectedShift(activeShifts[0]);
-      setSelectedCity(newConfigs[activeShifts[0]].ciudad);
+    } else if (activeShifts.includes('Mañana')) {
+      setSelectedShift('Mañana');
+      setSelectedCity(newConfigs['Mañana'].ciudad);
+    } else if (activeShifts.includes('Tarde')) {
+      setSelectedShift('Tarde');
+      setSelectedCity(newConfigs['Tarde'].ciudad);
     } else {
       // Check defaults if no active manual configs
       const dateParts = currentDate.split('-');
@@ -418,18 +419,17 @@ export default function AdminDashboard() {
       const day = dateObj.getDay();
 
       if (day === 5) {
-        // Viernes supports both shifts
-        const shiftToUse = (selectedShift === 'Ninguno' ? 'Mañana' : selectedShift) as "Mañana" | "Tarde";
-        setSelectedShift(shiftToUse);
-        setSelectedCity(shiftToUse === 'Mañana' ? 'Gualeguay' : 'Galarza');
+        // Viernes supports both shifts, prioritize Mañana
+        setSelectedShift('Mañana');
+        setSelectedCity('Gualeguay');
       } else {
         const defaults = getDefaultsForDate(currentDate);
         if (defaults.turno === 'Ninguno' || (defaults.turno as string) === 'Ambos turnos') {
           setSelectedCity('Cerrado');
-          setSelectedShift(selectedShift === 'Ninguno' ? 'Mañana' : selectedShift);
+          setSelectedShift('Mañana');
         } else {
           setSelectedCity(defaults.ciudad);
-          setSelectedShift(defaults.turno);
+          setSelectedShift(defaults.turno as 'Mañana' | 'Tarde');
         }
       }
     }

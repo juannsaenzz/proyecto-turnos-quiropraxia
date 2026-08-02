@@ -379,9 +379,9 @@ export default function HistorialPacientePage({ params }: { params: { id: string
 
   const getEstadoStyles = (estado: string) => {
     switch (estado) {
-      case 'PENDIENTE': return 'bg-amber-950/50 text-amber-300 border-amber-500/20';
-      case 'CONFIRMADO': return 'bg-blue-950/50 text-blue-300 border-blue-500/20';
-      case 'ATENDIDO': return 'bg-emerald-950/50 text-emerald-300 border-emerald-500/20';
+      case 'PENDIENTE': return 'bg-blue-950/50 text-blue-300 border-blue-500/20';
+      case 'CONFIRMADO': return 'bg-emerald-950/50 text-emerald-300 border-emerald-500/20';
+      case 'ATENDIDO': return 'bg-purple-950/50 text-purple-300 border-purple-500/20';
       case 'AUSENTE': return 'bg-rose-950/50 text-rose-300 border-rose-500/20';
       default: return 'bg-slate-950 text-slate-400 border-slate-800';
     }
@@ -734,13 +734,13 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             
             {/* Status buttons (Grid on mobile, Row on desktop) */}
             <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-              <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
+              <button onClick={() => updateSelectedEstado('PENDIENTE')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
                 Pendientes
               </button>
-              <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
+              <button onClick={() => updateSelectedEstado('ATENDIDO')} className="px-3 py-1.5 bg-purple-950/50 text-purple-300 border border-purple-500/20 rounded-xl text-xs font-bold hover:bg-purple-900/40 hover:border-purple-500/40 transition whitespace-nowrap">
                 Atendidos
               </button>
-              <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
+              <button onClick={() => updateSelectedEstado('CONFIRMADO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
                 Confirmados
               </button>
               <button onClick={() => updateSelectedEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">

@@ -1332,18 +1332,18 @@ export default function AdminDashboard() {
     switch (estado) {
       case 'PENDIENTE':
         return {
-          card: "bg-slate-900 border-2 border-amber-500/40 hover:border-amber-500/70",
-          badge: "bg-amber-950/50 border-amber-500/20 text-amber-300"
-        };
-      case 'CONFIRMADO':
-        return {
           card: "bg-slate-900 border-2 border-blue-500/40 hover:border-blue-500/70",
           badge: "bg-blue-950/50 border-blue-500/20 text-blue-300"
         };
-      case 'ATENDIDO':
+      case 'CONFIRMADO':
         return {
           card: "bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-500/70",
           badge: "bg-emerald-950/50 border-emerald-500/20 text-emerald-300"
+        };
+      case 'ATENDIDO':
+        return {
+          card: "bg-slate-900 border-2 border-purple-500/40 hover:border-purple-500/70",
+          badge: "bg-purple-950/50 border-purple-500/20 text-purple-300"
         };
       case 'AUSENTE':
         return {
@@ -2101,14 +2101,14 @@ export default function AdminDashboard() {
             
             {/* Status buttons (Grid on mobile, Row on desktop) */}
             <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-              <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-amber-950/50 text-amber-300 border border-amber-500/20 rounded-xl text-xs font-bold hover:bg-amber-900/40 hover:border-amber-500/40 transition whitespace-nowrap">
-                Pendientes
+              <button onClick={() => handleBulkUpdateEstado('PENDIENTE')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
+                Marcar Pendientes
               </button>
-              <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
-                Atendidos
+              <button onClick={() => handleBulkUpdateEstado('ATENDIDO')} className="px-3 py-1.5 bg-purple-950/50 text-purple-300 border border-purple-500/20 rounded-xl text-xs font-bold hover:bg-purple-900/40 hover:border-purple-500/40 transition whitespace-nowrap">
+                Marcar Atendidos
               </button>
-              <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-blue-950/50 text-blue-300 border border-blue-500/20 rounded-xl text-xs font-bold hover:bg-blue-900/40 hover:border-blue-500/40 transition whitespace-nowrap">
-                Confirmados
+              <button onClick={() => handleBulkUpdateEstado('CONFIRMADO')} className="px-3 py-1.5 bg-emerald-950/50 text-emerald-300 border border-emerald-500/20 rounded-xl text-xs font-bold hover:bg-emerald-900/40 hover:border-emerald-500/40 transition whitespace-nowrap">
+                Marcar Confirmados
               </button>
               <button onClick={() => handleBulkUpdateEstado('AUSENTE')} className="px-3 py-1.5 bg-rose-950/50 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold hover:bg-rose-900/40 hover:border-rose-500/40 transition whitespace-nowrap">
                 Ausentes

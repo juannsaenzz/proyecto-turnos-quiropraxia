@@ -1022,18 +1022,18 @@ export default function AdminDashboard() {
     switch (estado) {
       case 'PENDIENTE':
         return {
-          card: "bg-amber-950/25 border-amber-500/25 text-amber-200 shadow-amber-950/10 hover:border-amber-500/40",
-          badge: "bg-amber-950/50 border-amber-500/20 text-amber-300"
-        };
-      case 'CONFIRMADO':
-        return {
           card: "bg-blue-950/25 border-blue-500/25 text-blue-200 shadow-blue-950/10 hover:border-blue-500/40",
           badge: "bg-blue-950/50 border-blue-500/20 text-blue-300"
         };
-      case 'ATENDIDO':
+      case 'CONFIRMADO':
         return {
           card: "bg-emerald-950/25 border-emerald-500/25 text-emerald-200 shadow-emerald-950/10 hover:border-emerald-500/40",
           badge: "bg-emerald-950/50 border-emerald-500/20 text-emerald-300"
+        };
+      case 'ATENDIDO':
+        return {
+          card: "bg-purple-950/25 border-purple-500/25 text-purple-200 shadow-purple-950/10 hover:border-purple-500/40",
+          badge: "bg-purple-950/50 border-purple-500/20 text-purple-300"
         };
       case 'AUSENTE':
         return {

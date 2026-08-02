@@ -591,8 +591,8 @@ export default function AdminDashboard() {
     if (selectedShift === 'Mañana') {
       const endHour = isFriday ? 15 : 14;
       const endMin = isFriday ? 30 : 45;
-      for (let hour = 7; hour <= endHour; hour++) {
-        for (let min = 0; min < 60; min += 15) {
+      for (let hour = 8; hour <= endHour; hour++) {
+        for (let min = (hour === 8 ? 30 : 0); min < 60; min += 15) {
           if (hour === endHour && min > endMin) break;
           const hh = String(hour).padStart(2, '0');
           const mm = String(min).padStart(2, '0');
@@ -636,8 +636,8 @@ export default function AdminDashboard() {
 
   const getModalTimeSlots = () => {
     const slots: string[] = [];
-    for (let hour = 7; hour <= 20; hour++) {
-      for (let min = 0; min < 60; min += 15) {
+    for (let hour = 8; hour <= 20; hour++) {
+      for (let min = (hour === 8 ? 30 : 0); min < 60; min += 15) {
         if (hour === 20 && min > 30) break;
         const hh = String(hour).padStart(2, '0');
         const mm = String(min).padStart(2, '0');
@@ -1578,7 +1578,7 @@ export default function AdminDashboard() {
                     onClick={() => {
                       if (selectedCity === 'Cerrado') return;
                       const isFriday = new Date(currentDate + "T00:00:00").getDay() === 5;
-                      const defaultHour = selectedShift === 'Mañana' ? '07:00' : (isFriday ? '16:30' : '15:00');
+                      const defaultHour = selectedShift === 'Mañana' ? '08:30' : (isFriday ? '16:30' : '15:00');
                       setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                       setShowNewTurnoModal(true);
                     }}
@@ -1646,7 +1646,7 @@ export default function AdminDashboard() {
                   onClick={() => {
                     if (selectedCity === 'Cerrado') return;
                     const isFriday = new Date(currentDate + "T00:00:00").getDay() === 5;
-                    const defaultHour = selectedShift === 'Mañana' ? '07:00' : (isFriday ? '16:30' : '15:00');
+                    const defaultHour = selectedShift === 'Mañana' ? '08:30' : (isFriday ? '16:30' : '15:00');
                     setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                     setShowNewTurnoModal(true);
                   }}

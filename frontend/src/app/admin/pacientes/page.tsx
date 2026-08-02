@@ -1241,7 +1241,10 @@ export default function AdminDashboard() {
                       <tr key={p.id} className="hover:bg-slate-850/40 transition">
                         <td className="px-6 py-4">
                           <button
-                            onClick={() => router.push(`/admin/pacientes/${p.id}`)}
+                            onClick={() => {
+                              setIsNavigatingGlobal(true);
+                              router.push(`/admin/pacientes/${p.id}`);
+                            }}
                             className="font-extrabold text-white text-base capitalize tracking-tight max-w-[120px] sm:max-w-[180px] md:max-w-[250px] lg:max-w-[300px] truncate hover:text-emerald-400 transition-colors text-left"
                             title={`Ver historial de ${p.nombre}`}
                           >

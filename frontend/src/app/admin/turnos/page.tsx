@@ -1834,13 +1834,16 @@ export default function AdminDashboard() {
                                           />
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                          <Link 
-                                            href={`/admin/pacientes/${appt.pacienteId}`}
-                                            className="font-extrabold text-xl tracking-tight text-slate-100 break-words pr-2 line-clamp-2 hover:text-emerald-400 hover:underline transition-colors"
+                                          <button 
+                                            onClick={() => {
+                                              setIsNavigatingGlobal(true);
+                                              router.push(`/admin/pacientes/${appt.pacienteId}`);
+                                            }}
+                                            className="font-extrabold text-xl tracking-tight text-slate-100 break-words pr-2 line-clamp-2 hover:text-emerald-400 transition-colors text-left"
                                             title={`Ver historial de ${appt.pacienteNombre}`}
                                           >
                                             {appt.pacienteNombre}
-                                          </Link>
+                                          </button>
                                           {appt.updatedAt && appt.updatedBy && (
                                             <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5 block w-full break-words">
                                               Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false}).replace(', ', ' - ')}hs)

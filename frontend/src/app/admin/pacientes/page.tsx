@@ -275,6 +275,11 @@ export default function AdminDashboard() {
     if (!hourStr || !dateStr) return 'Cerrado';
     const dateObj = new Date(dateStr + "T00:00:00");
     const isFriday = dateObj.getDay() === 5;
+
+    if (isFriday && (hourStr === '15:45' || hourStr === '16:00' || hourStr === '16:15')) {
+      return 'Cerrado';
+    }
+
     const shiftCutoff = isFriday ? 16 : 15;
     const isMorning = parseInt(hourStr.split(':')[0], 10) < shiftCutoff;
     const shiftKey = isMorning ? 'MANANA' : 'TARDE';

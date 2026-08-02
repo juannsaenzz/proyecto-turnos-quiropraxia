@@ -1427,9 +1427,13 @@ export default function AdminDashboard() {
             <Menu className="h-6 w-6" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0 flex items-center justify-center w-12 h-12">
+            <button 
+              onClick={() => { window.location.href = '/admin/turnos'; }} 
+              className="flex-shrink-0 flex items-center justify-center w-12 h-12 hover:scale-110 transition-transform duration-300"
+              title="Volver a Inicio"
+            >
               <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
-            </div>
+            </button>
             <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
               Agenda
             </h1>

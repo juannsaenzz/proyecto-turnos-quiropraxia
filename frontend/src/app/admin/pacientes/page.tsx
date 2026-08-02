@@ -1133,10 +1133,10 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => { window.location.href = '/admin/turnos'; }} 
-                className="flex-shrink-0 flex items-center justify-center w-12 h-12 hover:scale-110 transition-transform duration-300"
+                className="flex-shrink-0 flex items-center justify-center w-12 h-12 hover:scale-110 transition-transform duration-300 mix-blend-screen"
                 title="Volver a Inicio"
               >
-                <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
+                <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
               </button>
               <h1 className="text-xl font-extrabold text-slate-100 tracking-tight capitalize">
                 Pacientes

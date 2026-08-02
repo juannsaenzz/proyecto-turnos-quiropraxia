@@ -466,10 +466,10 @@ export default function HistorialPacientePage({ params }: { params: { id: string
             </button>
             <button 
               onClick={() => { window.location.href = '/admin/turnos'; }} 
-              className="shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 transition-transform duration-300"
+              className="shrink-0 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 hover:scale-110 transition-transform duration-300 mix-blend-screen"
               title="Volver a Inicio"
             >
-              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full mix-blend-screen opacity-90 hover:opacity-100 transition-opacity" />
+              <Image src={logo} alt="Logo" width={48} height={48} className="object-contain w-full h-full opacity-90 hover:opacity-100 transition-opacity" />
             </button>
             <h1 className="text-base sm:text-xl font-extrabold text-slate-100 tracking-tight truncate">
               Ficha del Paciente

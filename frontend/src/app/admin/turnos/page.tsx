@@ -1577,7 +1577,8 @@ export default function AdminDashboard() {
                   <button 
                     onClick={() => {
                       if (selectedCity === 'Cerrado') return;
-                      const defaultHour = selectedShift === 'Mañana' ? '09:00' : "15:00";
+                      const isFriday = new Date(currentDate + "T00:00:00").getDay() === 5;
+                      const defaultHour = selectedShift === 'Mañana' ? '07:00' : (isFriday ? '16:30' : '15:00');
                       setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                       setShowNewTurnoModal(true);
                     }}
@@ -1644,7 +1645,8 @@ export default function AdminDashboard() {
                 <button 
                   onClick={() => {
                     if (selectedCity === 'Cerrado') return;
-                    const defaultHour = selectedShift === 'Mañana' ? '09:00' : "15:00";
+                    const isFriday = new Date(currentDate + "T00:00:00").getDay() === 5;
+                    const defaultHour = selectedShift === 'Mañana' ? '07:00' : (isFriday ? '16:30' : '15:00');
                     setNewTurno({ ...newTurno, fechaHora: currentDate, hora: defaultHour, ciudad: getTargetCityForAppointment(currentDate, defaultHour) });
                     setShowNewTurnoModal(true);
                   }}

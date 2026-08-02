@@ -5,6 +5,7 @@ import Image from 'next/image';
 import logo from '@/assets/2.png';
 import confirmationImg from '@/assets/confirmation.jpg';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { useSidebar } from '../components/SidebarContext';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -1833,12 +1834,13 @@ export default function AdminDashboard() {
                                           />
                                         </div>
                                         <div className="flex flex-col min-w-0">
-                                          <span 
-                                            className="font-extrabold text-xl tracking-tight text-slate-100 break-words pr-2 line-clamp-2"
-                                            title={appt.pacienteNombre}
+                                          <Link 
+                                            href={`/admin/pacientes/${appt.pacienteId}`}
+                                            className="font-extrabold text-xl tracking-tight text-slate-100 break-words pr-2 line-clamp-2 hover:text-emerald-400 hover:underline transition-colors"
+                                            title={`Ver historial de ${appt.pacienteNombre}`}
                                           >
                                             {appt.pacienteNombre}
-                                          </span>
+                                          </Link>
                                           {appt.updatedAt && appt.updatedBy && (
                                             <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5 block w-full break-words">
                                               Modificado por {appt.updatedBy.split('@')[0]} ({new Date(appt.updatedAt).toLocaleString('es-AR', {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false}).replace(', ', ' - ')}hs)

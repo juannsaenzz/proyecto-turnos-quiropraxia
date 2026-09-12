@@ -36,7 +36,7 @@ async function uploadFile() {
     console.log(`Subiendo archivo ${fileName} a Google Drive...`);
 
     const file = await drive.files.create({
-      resource: fileMetadata,
+      requestBody: fileMetadata,
       media: media,
       fields: 'id',
     });

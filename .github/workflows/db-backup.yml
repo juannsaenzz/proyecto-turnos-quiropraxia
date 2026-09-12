@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies for script
-        run: npm install googleapis
+        run: npm install @supabase/supabase-js
 
       - name: Install PostgreSQL 17 Client
         run: |
@@ -36,8 +36,8 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" > backup.sql
           echo "Backup generado correctamente."
 
-      - name: Upload to Google Drive
+      - name: Upload to Supabase Storage and Prune Old Backups
         env:
-          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
-          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
-        run: node scripts/upload_to_drive.js
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/upload_to_supabase.js

@@ -1,0 +1,36 @@
+name: Database Backup to Google Drive
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Todos los días a las 3:00 AM UTC
+  workflow_dispatch: # Permite ejecutarlo manualmente desde la pestaña Actions
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies for script
+        run: npm install googleapis
+
+      - name: Dump PostgreSQL Database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          echo "Ejecutando pg_dump..."
+          pg_dump "$SUPABASE_DB_URL" > backup.sql
+          echo "Backup generado correctamente."
+
+      - name: Upload to Google Drive
+        env:
+          GDRIVE_CREDENTIALS: ${{ secrets.GDRIVE_CREDENTIALS }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: node scripts/upload_to_drive.js

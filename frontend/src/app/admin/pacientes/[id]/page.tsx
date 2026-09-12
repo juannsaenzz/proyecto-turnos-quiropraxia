@@ -1,5 +1,6 @@
 "use client";
 
+import { authFetch } from '@/utils/auth-fetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -148,7 +149,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     setFormErrors({});
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
         method: "PUT",
         headers: {
           'Content-Type': "application/json",
@@ -198,7 +199,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
   const handleSaveTurno = async (id: number) => {
     setIsSaving(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -227,7 +228,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
     setUpdatingStatusId(id);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+      const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -261,7 +262,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'danger',
       onConfirm: async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          const res = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE'
           });
           if (res.ok) {
@@ -291,7 +292,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: "danger",
       onConfirm: async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${paciente.id}`, {
+          const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${paciente.id}`, {
             method: "DELETE",
           });
 
@@ -332,7 +333,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'warning',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estado, updatedBy: currentUserEmail || undefined })
@@ -360,7 +361,7 @@ export default function HistorialPacientePage({ params }: { params: { id: string
       type: 'danger',
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: 'DELETE'
           })));
           setTurnos(prev => prev.filter(t => !selectedTurnos.includes(t.id)));

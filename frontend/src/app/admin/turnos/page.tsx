@@ -1,5 +1,6 @@
 "use client";
 
+import { authFetch } from '@/utils/auth-fetch';
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import logo from '@/assets/2.png';
@@ -458,7 +459,7 @@ export default function AdminDashboard() {
 
     try {
       for (const s of shiftsToSave) {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`, {
+        const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`, {
           method: "POST",
           headers: {
             'Content-Type': "application/json",
@@ -500,7 +501,7 @@ export default function AdminDashboard() {
 
   const handleSaveHistorialNote = async (pacienteId: number, fechaStr: string, notas: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
         method: "POST",
         headers: { 'Content-Type': "application/json" },
         body: JSON.stringify({
@@ -513,7 +514,7 @@ export default function AdminDashboard() {
         throw new Error('Error al guardar la nota clínica');
       }
       // Refresh clinical history from database
-      const resHistorial = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
+      const resHistorial = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
       if (resHistorial.ok) {
         const data = await resHistorial.json();
         setHistoriales(data);
@@ -653,7 +654,7 @@ export default function AdminDashboard() {
   // Handlers
   const executeCreateTurno = async (p: Paciente, isoDateTime: string, timeLabel: string) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`, {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -802,7 +803,7 @@ export default function AdminDashboard() {
   const executeUpdateTurno = async (updated: Turno) => {
     const isoDateTime = `${updated.fechaHora}T${updated.hora}:00.000Z`;
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${updated.id}`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${updated.id}`, {
         method: "PUT",
         headers: {
           'Content-Type': "application/json",
@@ -938,7 +939,7 @@ export default function AdminDashboard() {
     if (!name || !name.trim()) return;
     setIsRegisteringQuick(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -971,7 +972,7 @@ export default function AdminDashboard() {
     if (!name || !name.trim()) return;
     setIsRegisteringQuick(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -1030,7 +1031,7 @@ export default function AdminDashboard() {
     setFormErrors({});
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`, {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -1108,7 +1109,7 @@ export default function AdminDashboard() {
     setFormErrors({});
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${editingPaciente.id}`, {
         method: "PUT",
         headers: {
           'Content-Type': "application/json",
@@ -1151,7 +1152,7 @@ export default function AdminDashboard() {
       type: "danger",
       onConfirm: async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${id}`, {
+          const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes/${id}`, {
             method: "DELETE",
           });
 
@@ -1185,7 +1186,7 @@ export default function AdminDashboard() {
       type: "danger",
       onConfirm: async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: "DELETE",
           });
 
@@ -1215,7 +1216,7 @@ export default function AdminDashboard() {
     if (!p) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`, {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -1258,7 +1259,7 @@ export default function AdminDashboard() {
     setUpdatingStatusId(id);
     try {
       await new Promise(resolve => setTimeout(resolve, 500));
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+      const response = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
         method: "PUT",
         headers: {
           'Content-Type': "application/json",
@@ -1299,7 +1300,7 @@ export default function AdminDashboard() {
       type: "warning",
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: "PUT",
             headers: {
               'Content-Type': "application/json",
@@ -1329,7 +1330,7 @@ export default function AdminDashboard() {
       type: "danger",
       onConfirm: async () => {
         try {
-          await Promise.all(selectedTurnos.map(id => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
+          await Promise.all(selectedTurnos.map(id => authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${id}`, {
             method: "DELETE",
           })));
           
@@ -2215,13 +2216,13 @@ export default function AdminDashboard() {
                           if (affectedTurnos.length > 0) {
                             if (tempCity === 'Cerrado') {
                               // Delete affected turnos
-                              await Promise.all(affectedTurnos.map(t => fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, { method: "DELETE" })));
+                              await Promise.all(affectedTurnos.map(t => authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, { method: "DELETE" })));
                               setTurnos(prev => prev.filter(t => !affectedTurnos.find(at => at.id === t.id)));
                             } else {
                               // Move affected turnos
                               await Promise.all(affectedTurnos.map(t => {
                                 const isoDateTime = `${t.fechaHora}T${t.hora}:00.000Z`;
-                                return fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, {
+                                return authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos/${t.id}`, {
                                   method: "PUT",
                                   headers: { 'Content-Type': "application/json" },
                                   body: JSON.stringify({

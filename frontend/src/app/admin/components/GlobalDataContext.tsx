@@ -1,5 +1,6 @@
 "use client";
 
+import { authFetch } from '@/utils/auth-fetch';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export interface Paciente {
@@ -66,13 +67,13 @@ export function GlobalDataProvider({ children }: { children: React.ReactNode }) 
     setLoading(true);
     try {
       // 1. Fetch Pacientes
-      const resPacientes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`);
+      const resPacientes = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/pacientes`);
       if (!resPacientes.ok) throw new Error('Error al cargar pacientes');
       const dataPacientes = await resPacientes.json();
       setPacientes(dataPacientes);
 
       // 2. Fetch Turnos
-      const resTurnos = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`);
+      const resTurnos = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/turnos`);
       if (!resTurnos.ok) throw new Error('Error al cargar turnos');
       const dataTurnos = await resTurnos.json();
       const mappedTurnos = dataTurnos.map((t: any) => {
@@ -94,13 +95,13 @@ export function GlobalDataProvider({ children }: { children: React.ReactNode }) 
       setTurnos(mappedTurnos);
 
       // 3. Fetch All Configs
-      const resConfigs = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`);
+      const resConfigs = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/configuracion-dia`);
       if (!resConfigs.ok) throw new Error('Error al cargar configuraciones');
       const dataConfigs = await resConfigs.json();
       setAllConfigs(dataConfigs);
 
       // 4. Fetch Historiales
-      const resHistorial = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
+      const resHistorial = await authFetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/historial`);
       if (!resHistorial.ok) throw new Error('Error al cargar historiales');
       const dataHistorial = await resHistorial.json();
       setHistoriales(dataHistorial);

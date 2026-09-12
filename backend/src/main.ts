@@ -1,6 +1,8 @@
+import './env';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, ForbiddenException } from '@nestjs/common';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -8,12 +10,27 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
-    forbidNonWhitelisted: false,
+    forbidNonWhitelisted: true,
   }));
   
-  // Habilitar CORS para permitir peticiones desde el frontend
+  // Habilitar Helmet para cabeceras de seguridad
+  app.use(helmet());
+
+  // Habilitar CORS restrictivo
+  const allowedOrigins = [
+    'https://centroquiropracticonicolas.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+  
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new ForbiddenException('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

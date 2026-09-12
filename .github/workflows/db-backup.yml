@@ -32,8 +32,8 @@ jobs:
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          echo "Ejecutando pg_dump..."
-          pg_dump "$SUPABASE_DB_URL" > backup.sql
+          echo "Ejecutando pg_dump 17..."
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" > backup.sql
           echo "Backup generado correctamente."
 
       - name: Upload to Google Drive

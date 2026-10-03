@@ -252,11 +252,11 @@ export default function AdminDashboard() {
     switch (day) {
       case 1: // Lunes
       case 3: // Miércoles
-      case 4: // Jueves
+      case 5: // Viernes
         return { ciudad: "Rosario del Tala", turno: "Tarde" as const };
       case 2: // Martes
         return { ciudad: "Maciá", turno: "Tarde" as const };
-      case 5: // Viernes
+      case 4: // Jueves
         // Default Gualeguay (Mañana) if hour < 16:00, Galarza (Tarde) if hour >= 16:00
         if (hourStr) {
           const hr = parseInt(hourStr.split(':')[0], 10);
@@ -275,13 +275,13 @@ export default function AdminDashboard() {
   const getTargetCityForAppointment = (dateStr: string, hourStr: string) => {
     if (!hourStr || !dateStr) return 'Cerrado';
     const dateObj = new Date(dateStr + "T00:00:00");
-    const isFriday = dateObj.getDay() === 5;
+    const isThursday = dateObj.getDay() === 4;
 
-    if (isFriday && (hourStr === '15:45' || hourStr === '16:00' || hourStr === '16:15')) {
+    if (isThursday && (hourStr === '15:45' || hourStr === '16:00' || hourStr === '16:15')) {
       return 'Cerrado';
     }
 
-    const shiftCutoff = isFriday ? 16 : 15;
+    const shiftCutoff = isThursday ? 16 : 15;
     const isMorning = parseInt(hourStr.split(':')[0], 10) < shiftCutoff;
     const shiftKey = isMorning ? 'MANANA' : 'TARDE';
     
@@ -465,11 +465,11 @@ export default function AdminDashboard() {
   // 15-Minute Grid generation based on shift, dynamically expanding for out-of-range appointments
   const get15MinTimeSlots = () => {
     const slots: string[] = [];
-    const isFriday = new Date(currentDate + "T00:00:00").getDay() === 5;
+    const isThursday = new Date(currentDate + "T00:00:00").getDay() === 4;
 
     if (selectedShift === 'Mañana') {
-      const endHour = isFriday ? 15 : 14;
-      const endMin = isFriday ? 30 : 45;
+      const endHour = isThursday ? 15 : 14;
+      const endMin = isThursday ? 30 : 45;
       for (let hour = 8; hour <= endHour; hour++) {
         for (let min = (hour === 8 ? 30 : 0); min < 60; min += 15) {
           if (hour === endHour && min > endMin) break;
@@ -479,8 +479,8 @@ export default function AdminDashboard() {
         }
       }
     } else if (selectedShift === 'Tarde') {
-      const startHour = isFriday ? 16 : 15;
-      const startMin = isFriday ? 30 : 0;
+      const startHour = isThursday ? 16 : 15;
+      const startMin = isThursday ? 30 : 0;
       for (let hour = startHour; hour < 21; hour++) {
         for (let min = (hour === startHour ? startMin : 0); min < 60; min += 15) {
           if (hour === 20 && min > 30) break; // Stop at 20:30 (ends 20:45)
@@ -495,7 +495,7 @@ export default function AdminDashboard() {
     const activeAppts = turnos.filter(t => {
       if (t.fechaHora !== currentDate || t.ciudad !== selectedCity) return false;
       const hr = parseInt(t.hora.split(':')[0], 10);
-      const shiftCutoff = isFriday ? 16 : 15;
+      const shiftCutoff = isThursday ? 16 : 15;
       if (selectedShift === 'Mañana') return hr < shiftCutoff;
       if (selectedShift === 'Tarde') return hr >= shiftCutoff;
       return false;
